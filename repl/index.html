@@ -158,7 +158,7 @@ function IncTerm(term) {
     eval: function () {
       var value = this.term.eval();
       if (value.tag != 'NumTerm') {
-        throw new Error('Type error: ‘inc’ needs an numeric argument');
+        throw new Error('Type error: ‘inc’ needs a numeric argument');
       }
       return NumTerm(value.num + 1);
     },
@@ -175,9 +175,30 @@ IncTerm.read = function (tokens) {
   return Pair(IncTerm(result.fst), result.snd);
 };
 
-
 // #6. Predecessor
-// TODO
+function DecTerm(term) {
+  return {
+    tag: 'DecTerm',
+    term: term,
+    eval: function () {
+      var value = this.term.eval();
+      if (value.tag != 'NumTerm') {
+        throw new Error('Type error: ‘dec’ needs a numeric argument');
+      }
+      return NumTerm(value.num - 1);
+    },
+    print: function () {
+      return 'dec ' + this.term.print();
+    }
+  };
+};
+DecTerm.read = function (tokens) {
+  if (tokens.length == 0) {
+    throw new Error('Syntax error: ‘dec’ needs an argument');
+  }
+  var result = readTerm(tokens);
+  return Pair(DecTerm(result.fst), result.snd);
+};
 
 // #7. Sum
 // TODO
@@ -424,6 +445,8 @@ function readTerm(tokens) {
   switch (tokens[0]) {
     case 'inc':
       return IncTerm.read(tokens.slice(1));
+    case 'dec':
+      return DecTerm.read(tokens.slice(1));
     case '(':
       return readTermInParens(tokens.slice(1));
     default:
