@@ -1,0 +1,572 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Church of the Least Fixed Point</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<!-- <meta name="apple-mobile-web-app-status-bar-style" content="default"> -->
+<!-- <meta name="apple-mobile-web-app-status-bar-style" content="black"> -->
+<!-- <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> -->
+<meta name="apple-mobile-web-app-title" content="Church of the Least Fixed Point">
+<meta name="format-detection" content="telephone=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<style type="text/css">
+
+body {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  padding: 0;
+  margin: 0;
+}
+  
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+textarea {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 0;
+  margin: 0;
+}
+
+p {
+  padding: 0;
+  margin: 0;
+}
+
+p.input {
+}
+
+p.output {
+  font-weight: bold;
+}
+
+p.error {
+  color: #c00;
+}
+
+body {
+  min-height: 100vh;
+  padding-bottom: 20vh;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  -webkit-justify-content: flex-end;
+  justify-content: flex-end;
+}
+
+#output-container {
+  counter-reset: dialog;
+}
+
+.dialog-container {
+  padding: 4px;
+  margin-left: 64px;
+  position: relative;
+}
+
+.dialog-container:before {
+  counter-increment: dialog;
+  content: counter(dialog);
+  position: absolute;
+  right: 100%;
+  top: 8px;
+  font-size: 9px;
+  color: #999;
+  padding-right: 4px;
+  text-align: right;
+}
+
+#input-container {
+  opacity: 0.9;
+  border-top: 1px #ccc solid;
+  width: 100%;
+  height: 20vh;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+}
+
+#input-container:before {
+  counter-increment: dialog;
+  content: counter(dialog);
+  position: absolute;
+  display: block;
+  width: 64px;
+  left: 0;
+  top: 8px;
+  font-size: 9px;
+  color: #999;
+  padding-right: 4px;
+  text-align: right;
+}
+
+#input {
+  padding: 4px 4px 4px 68px;
+  width: 100%;
+  height: 100%;
+}
+
+</style>
+</head>
+<body>
+  <div id="output-container"></div>
+  <div id="input-container">
+    <textarea id="input" autofocus="autofocus" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+  </div>
+<script type="text/javascript">
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//
+// BEGIN
+//
+//////////////////////////////////////////////////////////////////////////////
+
+// #1, #2, #3. Numbers and negative numbers
+function NumTerm(num) {
+  return {
+    tag: 'NumTerm',
+    num: num
+  };
+};
+
+// #4. Equality
+// TODO
+
+// #5. Successor
+// TODO
+
+// #6. Predecessor
+// TODO
+
+// #7. Sum
+// TODO
+
+// #8. Variables
+// TODO
+
+// #9. Product
+// TODO
+
+// #10. Integer Division
+// TODO
+
+// #11. Equality and Booleans
+// TODO
+
+// #12. Strict Less-Than
+// TODO
+
+// #13. Modulate
+// TODO
+
+// #14. Demodulate
+// TODO
+
+// #15. Send
+// TODO
+
+// #16. Negate
+// TODO
+
+// #17. Function Application
+// TODO
+
+// #18. S Combinator
+// TODO
+
+// #19. C Combinator
+// TODO
+
+// #20. B Combinator
+// TODO
+
+// #21. True (K Combinator)
+// TODO
+
+// #22. False
+// TODO
+
+// #23. Power of Two
+// TODO
+
+// #24. I Combinator
+// TODO
+
+// #25. Cons (or Pair)
+// TODO
+
+// #26. Car (First)
+// TODO
+
+// #27. Cdr (Tail)
+// TODO
+
+// #28. Nil (Empty List)
+// TODO
+
+// #29. Is Nil (Is Empty List)
+// TODO
+
+// #30. List Construction Syntax
+// TODO
+
+// #31. Vector
+// TODO
+
+// #32. Draw
+// TODO
+
+// #33. Checkerboard
+// TODO
+
+// #34. Multiple Draw
+// TODO
+
+// #35. Modulate List
+// TODO
+
+// #36. Send ( 0 )
+// TODO
+
+// #37. Is 0
+// TODO
+
+// #38. Interact
+// TODO
+
+// #39. Interaction Protocol
+// TODO
+
+// #40. Stateless Drawing Protocol
+// TODO
+
+// #41. Stateful Drawing Protocol
+// TODO
+
+// #42. Galaxy
+// TODO
+
+// #1. Numbers
+// TODO
+
+// #2. Numbers (cont.)
+// TODO
+
+// #3. Negative Numbers
+// TODO
+
+// #4. Equality
+// TODO
+
+// #5. Successor
+// TODO
+
+// #6. Predecessor
+// TODO
+
+// #7. Sum
+// TODO
+
+// #8. Variables
+// TODO
+
+// #9. Product
+// TODO
+
+// #10. Integer Division
+// TODO
+
+// #11. Equality and Booleans
+// TODO
+
+// #12. Strict Less-Than
+// TODO
+
+// #13. Modulate
+// TODO
+
+// #14. Demodulate
+// TODO
+
+// #15. Send
+// TODO
+
+// #16. Negate
+// TODO
+
+// #17. Function Application
+// TODO
+
+// #18. S Combinator
+// TODO
+
+// #19. C Combinator
+// TODO
+
+// #20. B Combinator
+// TODO
+
+// #21. True (K Combinator)
+// TODO
+
+// #22. False
+// TODO
+
+// #23. Power of Two
+// TODO
+
+// #24. I Combinator
+// TODO
+
+// #25. Cons (or Pair)
+// TODO
+
+// #26. Car (First)
+// TODO
+
+// #27. Cdr (Tail)
+// TODO
+
+// #28. Nil (Empty List)
+// TODO
+
+// #29. Is Nil (Is Empty List)
+// TODO
+
+// #30. List Construction Syntax
+// TODO
+
+// #31. Vector
+// TODO
+
+// #32. Draw
+// TODO
+
+// #33. Checkerboard
+// TODO
+
+// #34. Multiple Draw
+// TODO
+
+// #35. Modulate List
+// TODO
+
+// #36. Send ( 0 )
+// TODO
+
+// #37. Is 0
+// TODO
+
+// #38. Interact
+// TODO
+
+// #39. Interaction Protocol
+// TODO
+
+// #40. Stateless Drawing Protocol
+// TODO
+
+// #41. Stateful Drawing Protocol
+// TODO
+
+// #42. Galaxy
+// TODO
+
+// readTerm : Array String -> Pair Term (Array String)
+function readTerm(tokens) {
+  if (tokens.length == 0) {
+    throw new Error('Unexpected EOF; expected term');
+  }
+  if (/^-?[0-9]+$/.test(tokens[0])) {
+    return Pair(NumTerm(tokens[0]), tokens.slice(1));
+  }
+  switch (tokens[0]) {
+    case '(':
+      return readTermInParens(tokens.slice(1));
+    default:
+      throw new Error('Unrecognized token: ‘' + tokens[0] + '’');
+  }
+}
+
+// evalTerm : Term -> Term
+// TODO: Environments; dynamic or lexical scoping...
+function evalTerm(term) {
+  switch (term.tag) {
+    case 'NumTerm':
+      return term;
+    default:
+      throw new Error('Unexpected tag: ‘' + term.tag + '’');
+  }
+}
+
+// printTerm : Term -> String
+function printTerm(term) {
+  switch (term.tag) {
+    case 'NumTerm':
+      return term.num.toString();
+    default:
+      throw new Error('Unexpected tag: ‘' + term.tag + '’');
+  }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// END
+//
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+var Nothing = {
+  tag: 'Nothing'
+};
+
+function Just(just) {
+  return {
+    tag: 'Just',
+    just: just
+  };
+}
+
+function Pair(fst, snd) {
+  return {
+    tag: 'Pair',
+    fst: fst,
+    snd: snd
+  };
+}
+
+function Left(left) {
+  return {
+    tag: 'Left',
+    left: left
+  };
+}
+
+function Right(right) {
+  return {
+    tag: 'Right',
+    right: right
+  };
+}
+
+// readTermInParens : Array String -> Pair Term (Array String)
+function readTermInParens(tokens) {
+  if (tokens.length == 0) {
+    throw new Error('Unexpected EOF in parentheses; expected term');
+  }
+  var result = readTerm(tokens);
+  var moreTokens = result.snd;
+  if (moreTokens.length == 0) {
+    throw new Error('Unexpected EOF in parentheses; expected ‘)’');
+  }
+  if (moreTokens[0] != ')') {
+    throw new Error('Unexpected token in parentheses: ‘' + moreTokens[0] + '’');
+  }
+  var term = result.fst;
+  return Pair(term, moreTokens.slice(1));
+}
+
+function tokeniseInput(text) {
+  return text.replace(/\(/g, ' ( ').replace(/\)/g, ' ) ').trim().split(/\s+/);
+}
+
+// handleInput : String -> Either String String
+function handleInput(inputText) {
+  try {
+    var tokens = tokeniseInput(inputText);
+    var termAndMoreTokens = readTerm(tokens);
+    var moreTokens = termAndMoreTokens.snd;
+    if (moreTokens.length != 0) {
+      throw new Error('Unexpected token: ‘' + moreTokens[0] + '’');
+    }
+    var term = termAndMoreTokens.fst;
+    var value = evalTerm(term);
+    return Right(printTerm(value));
+  } catch (e) {
+    return Left(e.message);
+  }
+}
+
+function replaceSelection(textArea, replaceText) {
+  var oldText1 = textArea.value.slice(0, textArea.selectionStart);
+  var oldText2 = textArea.value.slice(textArea.selectionEnd);
+  var newText = oldText1.concat(replaceText).concat(oldText2);
+  var newCaretPosition = textArea.selectionStart + replaceText.length;
+  textArea.value = newText;
+  textArea.selectionStart = newCaretPosition;
+  textArea.selectionEnd = newCaretPosition;
+}
+
+function createParagraph(className, text) {
+  var p = document.createElement('p');
+  p.className = className;
+  var lines = text.split('\n');
+  for (var i = 1; i < lines.length; i++) {
+    lines[i] = lines[i].replace(/^( *)(.*)( *)$/, function (match, leftSpaces, text, rightSpaces) {
+      return ' '.repeat(leftSpaces.length) + text;
+    });
+  }
+  for (var i = 0; i < lines.length; i++) {
+    if (i) {
+      p.appendChild(document.createElement('br'));
+    }
+    p.appendChild(document.createTextNode(lines[i]));
+  }
+  return p;
+}
+
+function appendDialog(outputContainer, inputText, outputResult) {
+  var dialogContainer = document.createElement('div');
+  var inputP = createParagraph('input', inputText);
+  if (outputResult.tag == 'Left') {
+    var outputP = createParagraph('output error', outputResult.left);
+  } else {
+    var outputP = createParagraph('output', outputResult.right);
+  }
+  dialogContainer.className = 'dialog-container';
+  dialogContainer.appendChild(inputP);
+  dialogContainer.appendChild(outputP);
+  outputContainer.appendChild(dialogContainer);
+  return dialogContainer;
+}
+
+function handleKeyDown(event) {
+  var input = document.getElementById('input');
+  if (event.keyCode == 13) {
+    if (event.altKey || event.ctrlKey || event.shiftKey || event.metaKey) {
+      event.preventDefault();
+      replaceSelection(input, '\n');
+    }
+    else if (!event.altKey && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
+      event.preventDefault();
+      var inputText = input.value.trim();
+      if (inputText.length) {
+        var outputResult = handleInput(inputText);
+        var outputContainer = document.getElementById('output-container');
+        var dialogContainer = appendDialog(outputContainer, inputText, outputResult);
+        dialogContainer.scrollIntoView({ behavior: "smooth" });
+        input.value = null;
+      }
+    }
+  }
+}
+
+function main() {
+  document.getElementById('input').addEventListener('keydown', handleKeyDown);
+}
+
+addEventListener('load', main);
+
+</script>
+</body>
+</html>
