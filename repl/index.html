@@ -142,10 +142,10 @@ function NumTerm(num) {
       return this.num.toString();
     }
   };
-};
+}
 NumTerm.read = function (tokens) {
   return Pair(NumTerm(Number(tokens[0])), tokens.slice(1));
-}
+};
 
 // #4. Equality
 // TODO: Actually, it’s symbol binding, and so, needs environments and dynamic/lexical scoping
@@ -166,7 +166,7 @@ function IncTerm(term) {
       return 'inc ' + this.term.print();
     }
   };
-};
+}
 IncTerm.read = function (tokens) {
   if (tokens.length == 0) {
     throw new Error('Syntax error: ‘inc’ needs an argument');
@@ -191,7 +191,7 @@ function DecTerm(term) {
       return 'dec ' + this.term.print();
     }
   };
-};
+}
 DecTerm.read = function (tokens) {
   if (tokens.length == 0) {
     throw new Error('Syntax error: ‘dec’ needs an argument');
@@ -210,7 +210,7 @@ function AddTerm(term1, term2) {
       var value1 = this.term1.eval();
       var value2 = this.term2.eval();
       if (value1.tag != 'NumTerm' || value2.tag != 'NumTerm') {
-        throw new Error('Type error: ‘add’ needs two numeric argument');
+        throw new Error('Type error: ‘add’ needs two numeric arguments');
       }
       return NumTerm(value1.num + value2.num);
     },
@@ -218,7 +218,7 @@ function AddTerm(term1, term2) {
       return 'add ' + this.term1.print() + ' ' + this.term2.print();
     }
   };
-};
+}
 AddTerm.read = function (tokens) {
   if (tokens.length < 2) {
     throw new Error('Syntax error: ‘add’ needs two arguments');
@@ -229,7 +229,7 @@ AddTerm.read = function (tokens) {
 };
 
 // #8. Variables
-// TODO
+// TODO: Let’s hope we won’t need to deal with them
 
 // #9. Product
 function MulTerm(term1, term2) {
@@ -241,7 +241,7 @@ function MulTerm(term1, term2) {
       var value1 = this.term1.eval();
       var value2 = this.term2.eval();
       if (value1.tag != 'NumTerm' || value2.tag != 'NumTerm') {
-        throw new Error('Type error: ‘add’ needs two numeric argument');
+        throw new Error('Type error: ‘add’ needs two numeric arguments');
       }
       return NumTerm(value1.num * value2.num);
     },
@@ -249,7 +249,7 @@ function MulTerm(term1, term2) {
       return 'mul ' + this.term1.print() + ' ' + this.term2.print();
     }
   };
-};
+}
 MulTerm.read = function (tokens) {
   if (tokens.length < 2) {
     throw new Error('Syntax error: ‘mul’ needs two arguments');
@@ -260,7 +260,32 @@ MulTerm.read = function (tokens) {
 };
 
 // #10. Integer Division
-// TODO
+function DivTerm(term1, term2) {
+  return {
+    tag: 'DivTerm',
+    term1: term1,
+    term2: term2,
+    eval: function () {
+      var value1 = this.term1.eval();
+      var value2 = this.term2.eval();
+      if (value1.tag != 'NumTerm' || value2.tag != 'NumTerm') {
+        throw new Error('Type error: ‘div’ needs two numeric arguments');
+      }
+      return NumTerm(parseInt(value1.num / value2.num));
+    },
+    print: function () {
+      return 'div ' + this.term1.print() + ' ' + this.term2.print();
+    }
+  };
+}
+DivTerm.read = function (tokens) {
+  if (tokens.length < 2) {
+    throw new Error('Syntax error: ‘div’ needs two arguments');
+  }
+  var result1 = readTerm(tokens);
+  var result2 = readTerm(result1.snd);
+  return Pair(DivTerm(result1.fst, result2.fst), result2.snd);
+};
 
 // #11. Equality and Booleans
 // TODO
@@ -501,6 +526,8 @@ function readTerm(tokens) {
       return AddTerm.read(tokens.slice(1));
     case 'mul':
       return MulTerm.read(tokens.slice(1));
+    case 'div':
+      return DivTerm.read(tokens.slice(1));
     case '(':
       return readTermInParens(tokens.slice(1));
     default:
