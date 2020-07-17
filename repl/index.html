@@ -232,7 +232,32 @@ AddTerm.read = function (tokens) {
 // TODO
 
 // #9. Product
-// TODO
+function MulTerm(term1, term2) {
+  return {
+    tag: 'MulTerm',
+    term1: term1,
+    term2: term2,
+    eval: function () {
+      var value1 = this.term1.eval();
+      var value2 = this.term2.eval();
+      if (value1.tag != 'NumTerm' || value2.tag != 'NumTerm') {
+        throw new Error('Type error: ‘add’ needs two numeric argument');
+      }
+      return NumTerm(value1.num * value2.num);
+    },
+    print: function () {
+      return 'mul ' + this.term1.print() + ' ' + this.term2.print();
+    }
+  };
+};
+MulTerm.read = function (tokens) {
+  if (tokens.length < 2) {
+    throw new Error('Syntax error: ‘mul’ needs two arguments');
+  }
+  var result1 = readTerm(tokens);
+  var result2 = readTerm(result1.snd);
+  return Pair(MulTerm(result1.fst, result2.fst), result2.snd);
+};
 
 // #10. Integer Division
 // TODO
@@ -474,6 +499,8 @@ function readTerm(tokens) {
       return DecTerm.read(tokens.slice(1));
     case 'add':
       return AddTerm.read(tokens.slice(1));
+    case 'mul':
+      return MulTerm.read(tokens.slice(1));
     case '(':
       return readTermInParens(tokens.slice(1));
     default:
