@@ -834,6 +834,55 @@ function printTerm(term) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+function StringResult(string) {
+  return {
+    tag: 'StringResult',
+    string: string,
+  };
+}
+
+function BitmapResult(bitmap) {
+  return {
+    tag: 'BitmapResult',
+    bitmap: bitmap,
+  };
+}
+
+// handleInput : String -> Either String String
+function handleInput(scope, inputText) {
+  try {
+    var tokens = tokeniseInput(inputText);
+    var termAndMoreTokens = readTerm(tokens);
+    var moreTokens = termAndMoreTokens.snd;
+    if (moreTokens.length != 0) {
+      throw new Error('Unexpected token: ‘' + moreTokens[0] + '’');
+    }
+    var term = termAndMoreTokens.fst;
+    var value = evalTerm(scope, term);
+    if (typeof value.render !== 'undefined') {
+      return Right(BitmapResult(value.render()));
+    } else {
+      return Right(StringResult(printTerm(value)));
+    }
+  } catch (e) {
+    console.error(e);
+    return Left(e.message);
+  }
+}
+
+// assertRight : String -> String -> ()
+function assertRight(string, expectedRight) {
+  if (typeof window === 'undefined') {
+    const assert = require('assert');
+    assert.deepEqual(
+      handleInput(Scope(), string),
+      Right(StringResult(expectedRight))
+    );
+  }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 if (typeof window === 'undefined') {
   const assert = require('assert');
   assert.strictEqual(NumTerm(37).print(), '37');
@@ -1361,60 +1410,4 @@ if (typeof window === 'undefined') {
       [],
     )
   );
-}
-//////////////////////////////////////////////////////////////////////////////
-
-function printUnaryOp(op) {
-  return op.opName + ' ' + op.arg1.print();
-}
-
-function printBinaryOp(op) {
-  return op.opName + ' ' + op.arg1.print() + ' ' + op.arg2.print();
-}
-
-// handleInput : String -> Either String String
-function handleInput(scope, inputText) {
-  try {
-    var tokens = tokeniseInput(inputText);
-    var termAndMoreTokens = readTerm(tokens);
-    var moreTokens = termAndMoreTokens.snd;
-    if (moreTokens.length != 0) {
-      throw new Error('Unexpected token: ‘' + moreTokens[0] + '’');
-    }
-    var term = termAndMoreTokens.fst;
-    var value = evalTerm(scope, term);
-    if (typeof value.render !== 'undefined') {
-      return Right(BitmapResult(value.render()));
-    } else {
-      return Right(StringResult(printTerm(value)));
-    }
-  } catch (e) {
-    console.error(e);
-    return Left(e.message);
-  }
-}
-
-function StringResult(string) {
-  return {
-    tag: 'StringResult',
-    string: string,
-  };
-}
-
-function BitmapResult(bitmap) {
-  return {
-    tag: 'BitmapResult',
-    bitmap: bitmap,
-  };
-}
-
-// assertRight : String -> String -> ()
-function assertRight(string, expectedRight) {
-  if (typeof window === 'undefined') {
-    const assert = require('assert');
-    assert.deepEqual(
-      handleInput(Scope(), string),
-      Right(StringResult(expectedRight))
-    );
-  }
 }
