@@ -475,13 +475,42 @@ PairTerm.prototype.print = function () {
 };
 
 // #26. Car (First)
-// TODO
+var CarTerm = {
+  tag: 'CarTerm',
+  eval: function (env) {
+    return this;
+  },
+  apply: function (env, arg) {
+    var val = arg.eval(env);
+    if (val.tag != 'PairTerm') {
+      throw new Error('Type error: ‘car’ needs a list argument');
+    }
+    return val.fst;
+  },
+  print: function () {
+    return 'car';
+  }
+};
 
 // #27. Cdr (Tail)
-// TODO
+var CdrTerm = {
+  tag: 'CdrTerm',
+  eval: function (env) {
+    return this;
+  },
+  apply: function (env, arg) {
+    var val = arg.eval(env);
+    if (val.tag != 'PairTerm') {
+      throw new Error('Type error: ‘cdr’ needs a list argument');
+    }
+    return val.snd;
+  },
+  print: function () {
+    return 'cdr';
+  }
+};
 
 // #28. Nil (Empty List)
-
 var NilTerm = {
   tag: 'NilTerm',
   eval: function (env) {
@@ -738,19 +767,16 @@ function readTerm(tokens) {
     case 'f':
       return Pair(FTerm, moreTokens);
 
-      // TODO: pwr2 is hardcoded in the stdEnv in main.js; make it better
+    // TODO: pwr2 is hardcoded in the stdEnv in main.js; make it better
 
     case 'i':
       return Pair(ITerm, moreTokens);
     case 'cons':
       return Pair(ConsTerm, moreTokens);
-
-    // TODO: Implement car, cdr
     case 'car':
-      throw new Error('‘car’ is unimplemented');
+      return Pair(CarTerm, moreTokens);
     case 'cdr':
-      throw new Error('‘cdr’ is unimplemented');
-
+      return Pair(CdrTerm, moreTokens);
     case 'nil':
       return Pair(NilTerm, moreTokens);
 
@@ -1575,8 +1601,10 @@ assertRight('cons', 'cons');
 assertRight('ap ap cons 1 2', 'cons 1 2');
 // assertRight('ap ap ap cons 1 2 3', 'cons 1 2 3');
 
-// assertRight('car', 'car');
-// assertRight('cdr', 'cdr');
+assertRight('car', 'car');
+assertRight('ap car ap ap cons 0 1', '0');
+assertRight('cdr', 'cdr');
+assertRight('ap cdr ap ap cons 0 1', '1');
 assertRight('nil', 'nil');
 // assertRight('ap nil 0', 't');
 // assertRight('isnil', 'isnil');
