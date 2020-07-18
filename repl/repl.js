@@ -35,70 +35,123 @@ function Right(right) {
 
 // #1, #2, #3. Numbers and negative numbers
 function NumTerm(num) {
-  return {
+  if (!(this instanceof NumTerm)) {
+    return new NumTerm(num);
+  }
+  return Object.assign(this, {
     tag: 'NumTerm',
     num: num,
-    eval: function () {
-      return this;
-    },
-    print: function () {
-      return this.num.toString();
-    }
-  };
+  });
+}
+
+NumTerm.prototype.eval = function () {
+  return this;
+};
+
+NumTerm.prototype.print = function () {
+  return this.num.toString();
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.strictEqual(NumTerm(37).print(), '37');
 }
 
 // #4. Equality
 // TODO: Actually, it’s symbol binding, and so, needs environments and dynamic/lexical scoping
 
 // #5. Application
-// TODO: Add parsing of ApTerm, add eval
 function ApTerm(arg1, arg2) {
-  return {
+  if (!(this instanceof ApTerm)) {
+    return new ApTerm(arg1, arg2);
+  }
+  return Object.assign(this, {
     tag: 'ApTerm',
     opName: 'ap',
     arg1: arg1,
     arg2: arg2,
-    eval: function () {
-      return this;
-    },
-    print: function () {
-      return printBinaryOp(this);
-    }
-  };
+  });
+}
+
+ApTerm.prototype.eval = function () {
+  if (this.arg1.apply) {
+    return this.arg1.apply(this.arg2);
+  } else {
+    throw new Error(
+      'Cannot perform application on term: ‘' + this.arg1.tag +
+      '’. Did you forget to implement `apply`?'
+    );
+  }
+};
+
+ApTerm.prototype.print = function () {
+  return printBinaryOp(this);
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.throws(
+    () => ApTerm(NumTerm(37), NumTerm(42)).eval(),
+    /Cannot perform application on term: ‘NumTerm’/
+  );
 }
 
 // #5. Successor
-function IncTerm(arg1) {
-  return {
-    tag: 'IncTerm',
-    opName: 'inc',
-    arg1: arg1,
-    eval: function () {
-      return evalUnaryNumOp(this, function (num1) {
-        return num1 + 1;
-      });
-    },
-    print: function () {
-      return printUnaryOp(this);
-    }
-  };
+var IncTerm = {
+  tag: 'IncTerm',
+  opName: 'inc',
+  eval: function () {
+    return this;
+  },
+  apply: function (arg) {
+    return applyUnaryNumOp(this, arg, function (num) {
+      return num + 1;
+    });
+  },
+  print: function () {
+    return printUnaryOp(this);
+  }
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(IncTerm, NumTerm(42)).eval(),
+    NumTerm(43),
+  );
+  assert.throws(
+    () => ApTerm(IncTerm, IncTerm).eval(),
+    /Type error: ‘inc’ needs one numeric argument/
+  );
 }
 
 // #6. Predecessor
-function DecTerm(arg1) {
-  return {
-    tag: 'DecTerm',
-    opName: 'dec',
-    arg1: arg1,
-    eval: function () {
-      return evalUnaryNumOp(this, function (num1) {
-        return num1 - 1;
-      });
-    },
-    print: function () {
-      return printUnaryOp(this);
-    }
-  };
+var DecTerm = {
+  tag: 'DecTerm',
+  opName: 'dec',
+  eval: function () {
+    return this;
+  },
+  apply: function (arg) {
+    return applyUnaryNumOp(this, arg, function (num) {
+      return num - 1;
+    });
+  },
+  print: function () {
+    return printUnaryOp(this);
+  }
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(DecTerm, NumTerm(42)).eval(),
+    NumTerm(41),
+  );
+  assert.throws(
+    () => ApTerm(DecTerm, DecTerm).eval(),
+    /Type error: ‘dec’ needs one numeric argument/
+  );
 }
 
 // #7. Sum
@@ -504,6 +557,11 @@ function ModulatedTerm(bits) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+// tokeniseInput : String -> Array String
+function tokeniseInput(text) {
+  return text.replace(/\(/g, ' ( ').replace(/\)/g, ' ) ').trim().split(/\s+/);
+}
+
 // readTerm : Array String -> Pair Term (Array String)
 function readTerm(tokens) {
   if (tokens.length == 0) {
@@ -516,9 +574,9 @@ function readTerm(tokens) {
   }
   switch (tokens[0]) {
     case 'inc':
-      return readUnaryOp('inc', IncTerm, moreTokens);
+      return Pair(IncTerm, moreTokens);
     case 'dec':
-      return readUnaryOp('dec', DecTerm, moreTokens);
+      return Pair(DecTerm, moreTokens);
     case 'mod':
       return readUnaryOp('mod', ModTerm, moreTokens);
     case 'add':
@@ -531,6 +589,8 @@ function readTerm(tokens) {
       return readBinaryOp('eq', EqTerm, moreTokens);
     case 'lt':
       return readBinaryOp('lt', LtTerm, moreTokens);
+    case 'ap':
+      return readBinaryOp('ap', ApTerm, moreTokens);
     case 't':
       return Pair(TrueTerm, moreTokens);
     case 'f':
@@ -542,6 +602,37 @@ function readTerm(tokens) {
     default:
       throw new Error('Unrecognized token: ‘' + headToken + '’');
   }
+}
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  // Numbers and negative numbers
+  assert.deepEqual(
+    readTerm(tokeniseInput('42')),
+    Pair(NumTerm(42), []),
+  );
+  assert.deepEqual(
+    readTerm(tokeniseInput('-42')),
+    Pair(NumTerm(-42), []),
+  );
+  // Nullary symbols: inc, dec
+  assert.deepEqual(
+    readTerm(tokeniseInput('inc')),
+    Pair(IncTerm, []),
+  );
+  assert.deepEqual(
+    readTerm(tokeniseInput('dec')),
+    Pair(DecTerm, []),
+  );
+  // Application
+  assert.deepEqual(
+    readTerm(tokeniseInput('ap inc 37')),
+    Pair(ApTerm(IncTerm, NumTerm(37)), []),
+  );
+  assert.throws(
+    () => readTerm(tokeniseInput('ap')),
+    /Syntax error: ‘ap’ needs two arguments/
+  );
 }
 
 // readUnaryOp : String -> (Term -> Term) -> Array String -> Pair Term (Array String)
@@ -611,6 +702,13 @@ function evalBinaryCompOp(op, fun) {
     throw new Error('Type error: ‘' + op.opName + '’ needs two numeric arguments');
   }
   return BoolTerm(fun(val1.num, val2.num));
+}
+
+function applyUnaryNumOp(op, arg, fun) {
+  if (arg.tag != 'NumTerm') {
+    throw new Error('Type error: ‘' + op.opName + '’ needs one numeric argument');
+  }
+  return NumTerm(fun(arg.num));
 }
 
 //////////////////////////////////////////////////////////////////////////////

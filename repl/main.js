@@ -1,7 +1,3 @@
-function tokeniseInput(text) {
-  return text.replace(/\(/g, ' ( ').replace(/\)/g, ' ) ').trim().split(/\s+/);
-}
-
 // handleInput : String -> Either String String
 function handleInput(inputText) {
   try {
