@@ -154,6 +154,7 @@ function AssignmentTerm(identifierTerm, term) {
 
 AssignmentTerm.prototype.eval = function (scope) {
   scope[this.identifierTerm.identifier] = this.term;
+  return this;
 };
 
 AssignmentTerm.prototype.print = function () {
@@ -832,7 +833,7 @@ var DrawTerm = {
   },
   apply: function (scope, arg) {
     const bitmap = [];
-    walk = (arg) => {
+    var walk = (arg) => {
       const list = arg.eval(scope);
       if (list.tag === 'NilTerm') {
         return;
@@ -1207,7 +1208,7 @@ function returnIdentifierOrReadAssignment(identifierTerm, tokens) {
     var result = readTerm(moreTokens);
     return Pair(AssignmentTerm(identifierTerm, result.fst), result.snd);
   }
-  return tokens;
+  throw new Error('no terms on the right side of =');
 }
 
 if (typeof window === 'undefined') {

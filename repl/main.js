@@ -1,5 +1,5 @@
 // handleInput : String -> Either String String
-function handleInput(inputText) {
+function handleInput(scope, inputText) {
   try {
     var tokens = tokeniseInput(inputText);
     var termAndMoreTokens = readTerm(tokens);
@@ -15,6 +15,7 @@ function handleInput(inputText) {
       return Right(StringResult(printTerm(value)));
     }
   } catch (e) {
+    console.error(e);
     return Left(e.message);
   }
 }
