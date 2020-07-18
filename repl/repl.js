@@ -736,6 +736,8 @@ PairTerm.prototype.eval = function () {
 
 PairTerm.prototype.print = function () {
   return 'cons ' + this.fst.print() + ' ' + this.snd.print();
+  // Should we eval when printing?
+  // return 'cons ' + this.fst.eval().print() + ' ' + this.snd.eval().print();
 };
 
 if (typeof window === 'undefined') {
@@ -788,12 +790,35 @@ if (typeof window === 'undefined') {
 var DrawTerm = {
   tag: 'DrawTerm',
   eval: function () {
-    return new ImageTerm([
-      Pair(1, 1),
-      Pair(1, 2),
-      Pair(2, 1),
-      Pair(2, 5),
-    ]);
+    return this;
+  },
+  apply: function (arg) {
+    const bitmap = [];
+    walk = (arg) => {
+      const list = arg.eval();
+      if (list.tag === 'NilTerm') {
+        return;
+      }
+      if (list.tag !== 'PairTerm') {
+        throw new Error('Type error: ‘draw’ expects a list');
+      }
+      const head = list.fst.eval();
+      if (head.tag !== 'PairTerm') {
+        throw new Error(
+          'Type error: ‘draw’ expects list elements to be pairs, got ' + head.tag
+        );
+      }
+      const xTerm = head.fst.eval();
+      const yTerm = head.snd.eval();
+      if (xTerm.tag !== 'NumTerm' || yTerm.tag !== 'NumTerm') {
+        throw new Error('Type error: ‘draw’ expects list elements to be pairs of numbers');
+      }
+      const point = Pair(xTerm.num, yTerm.num);
+      bitmap.push(point);
+      walk(list.snd);
+    };
+    walk(arg);
+    return ImageTerm(bitmap);
   },
   print: function () {
     return 'draw';
@@ -811,38 +836,77 @@ function getBitmapHeight(bitmap) {
 // type Bitmap = [(Int, Int)] (array of x, y pairs)
 // ImageTerm does not appear in the input, but it is the result of evaluating `draw`.
 function ImageTerm(bitmap) {
-  return {
+  if (!(this instanceof ImageTerm)) {
+    return new ImageTerm(bitmap);
+  }
+  return Object.assign(this, {
     tag: 'ImageTerm',
     bitmap: bitmap,
-    eval: function () {
-      return this;
-    },
-    print: function () {
-      return '[ ' + this.bitmap.map(p => `(${p.fst}, ${p.snd})`).join(',') + ' ]';
-    },
-    render: function () {
-      const minW = 17;
-      const minH = 13;
-      const w = Math.max(minW, getBitmapWidth(this.bitmap));
-      const h = Math.max(minH, getBitmapHeight(this.bitmap));
-      const newBitmap = [];
-      // add image border
-      for (let i = 1; i < w - 1; i++) {
-        newBitmap.push(Pair(i, 0));
-        newBitmap.push(Pair(i, h - 1));
-      }
-      for (let i = 1; i < h - 1; i++) {
-        newBitmap.push(Pair(0, i));
-        newBitmap.push(Pair(w - 1, i));
-      }
-      // offset all points by 1 to account for the border
-      for (let point of this.bitmap) {
-        newBitmap.push(Pair(point.fst + 1, point.snd + 1));
-      }
-      return newBitmap;
-    },
-  };
+  });
+}
+
+ImageTerm.prototype.eval = function () {
+  return this;
 };
+
+ImageTerm.prototype.print = function () {
+  return '[ ' + this.bitmap.map(p => `(${p.fst}, ${p.snd})`).join(',') + ' ]';
+};
+
+ImageTerm.prototype.render = function () {
+  const minW = 17;
+  const minH = 13;
+  const w = Math.max(minW, getBitmapWidth(this.bitmap));
+  const h = Math.max(minH, getBitmapHeight(this.bitmap));
+  const newBitmap = [];
+  // add image border
+  for (let i = 1; i < w - 1; i++) {
+    newBitmap.push(Pair(i, 0));
+    newBitmap.push(Pair(i, h - 1));
+  }
+  for (let i = 1; i < h - 1; i++) {
+    newBitmap.push(Pair(0, i));
+    newBitmap.push(Pair(w - 1, i));
+  }
+  // offset all points by 1 to account for the border
+  for (let point of this.bitmap) {
+    newBitmap.push(Pair(point.fst + 1, point.snd + 1));
+  }
+  return newBitmap;
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  const point = (x, y) => ApTerm(ApTerm(ConsTerm, NumTerm(x)), NumTerm(y));
+  assert.deepEqual(
+    // ap draw (ap ap cons (ap ap cons 1 1) nil)
+    ApTerm(
+      DrawTerm,
+      ApTerm(ApTerm(ConsTerm, point(1, 1)), NilTerm),
+    ).eval(),
+    ImageTerm([Pair(1, 1)]),
+  );
+  assert.deepEqual(
+    ApTerm(
+      DrawTerm,
+      ApTerm(
+        ApTerm(ConsTerm, point(1, 2)),
+        ApTerm(
+          ApTerm(ConsTerm, point(1, 1)),
+          NilTerm,
+        ),
+      ),
+    ).eval(),
+    ImageTerm([Pair(1, 2), Pair(1, 1)]),
+  );
+  assert.throws(
+    () => ApTerm(
+      DrawTerm,
+      IncTerm,
+    ).eval(),
+    /Type error: ‘draw’ expects a list/
+  );
+}
 
 // #33. Checkerboard
 // TODO
@@ -1203,6 +1267,30 @@ if (typeof window === 'undefined') {
       ),
       ['nil'],
     ),
+  );
+  // Other tests
+  // ap draw (ap ap cons (ap ap cons 1 1) nil)
+  assert.deepEqual(
+    readTerm(tokeniseInput('ap draw (ap ap cons (ap ap cons 1 1) nil)')),
+    Pair(
+      ApTerm(
+        DrawTerm,
+        ApTerm(
+          ApTerm(
+            ConsTerm,
+            ApTerm(
+              ApTerm(
+                ConsTerm,
+                NumTerm(1),
+              ),
+              NumTerm(1),
+            ),
+          ),
+          NilTerm
+        ),
+      ),
+      [],
+    )
   );
 }
 
