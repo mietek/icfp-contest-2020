@@ -777,7 +777,7 @@ function readTerm(tokens) {
     case 'f':
       return Pair(FTerm, moreTokens);
 
-    // TODO: pwr2 is hardcoded in the stdEnv in main.js; make it better
+    // TODO: pwr2 and checkerboard are hardcoded in the stdEnv in main.js; make it better
 
     case 'i':
       return Pair(ITerm, moreTokens);
@@ -806,8 +806,7 @@ function readTerm(tokens) {
     case 'draw':
       return Pair(DrawTerm, moreTokens);
 
-    // TODO: Implement checkerboard, if0, interact...
-    // case 'checkerboard':
+    // TODO: Implement if0, interact...
     case 'if0':
       throw new Error('‘if0’ is unimplemented');
     case 'interact':

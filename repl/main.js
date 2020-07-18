@@ -105,6 +105,7 @@ function handleKeyDown(env, event) {
 function main() {
   const stdEnv = Env();
   handleInput(stdEnv, 'pwr2 = ap ap s ap ap c ap eq 0 1 ap ap b ap mul 2 ap ap b pwr2 ap add -1');
+  handleInput(stdEnv, 'checkerboard = ap ap s ap ap b s ap ap c ap ap b c ap ap b ap c ap c ap ap s ap ap b s ap ap b ap b ap ap s i i lt eq ap ap s mul i nil ap ap s ap ap b s ap ap b ap b cons ap ap s ap ap b s ap ap b ap b cons ap c div ap c ap ap s ap ap b b ap ap c ap ap b b add neg ap ap b ap s mul div ap ap c ap ap b b checkerboard ap ap c add 2');
   document.getElementById('input').addEventListener('keydown', function(event) {
     handleKeyDown(stdEnv, event);
   });
