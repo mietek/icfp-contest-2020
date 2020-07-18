@@ -1,3 +1,36 @@
+var Nothing = {
+  tag: 'Nothing'
+};
+
+function Just(just) {
+  return {
+    tag: 'Just',
+    just: just
+  };
+}
+
+function Pair(fst, snd) {
+  return {
+    tag: 'Pair',
+    fst: fst,
+    snd: snd
+  };
+}
+
+function Left(left) {
+  return {
+    tag: 'Left',
+    left: left
+  };
+}
+
+function Right(right) {
+  return {
+    tag: 'Right',
+    right: right
+  };
+}
+
 // #1, #2, #3. Numbers and negative numbers
 function NumTerm(num) {
   return {
@@ -251,3 +284,55 @@ DivTerm.read = function (tokens) {
 // #42. Galaxy
 // TODO
 
+// readTerm : Array String -> Pair Term (Array String)
+function readTerm(tokens) {
+  if (tokens.length == 0) {
+    throw new Error('Unexpected EOF; expected term');
+  }
+  if (/^-?[0-9]+$/.test(tokens[0])) {
+    return NumTerm.read(tokens);
+  }
+  switch (tokens[0]) {
+    case 'inc':
+      return IncTerm.read(tokens.slice(1));
+    case 'dec':
+      return DecTerm.read(tokens.slice(1));
+    case 'add':
+      return AddTerm.read(tokens.slice(1));
+    case 'mul':
+      return MulTerm.read(tokens.slice(1));
+    case 'div':
+      return DivTerm.read(tokens.slice(1));
+    case '(':
+      return readTermInParens(tokens.slice(1));
+    default:
+      throw new Error('Unrecognized token: ‘' + tokens[0] + '’');
+  }
+}
+
+// readTermInParens : Array String -> Pair Term (Array String)
+function readTermInParens(tokens) {
+  if (tokens.length == 0) {
+    throw new Error('Unexpected EOF in parentheses; expected term');
+  }
+  var result = readTerm(tokens);
+  var moreTokens = result.snd;
+  if (moreTokens.length == 0) {
+    throw new Error('Unexpected EOF in parentheses; expected ‘)’');
+  }
+  if (moreTokens[0] != ')') {
+    throw new Error('Unexpected token in parentheses: ‘' + moreTokens[0] + '’');
+  }
+  var term = result.fst;
+  return Pair(term, moreTokens.slice(1));
+}
+
+// evalTerm : Term -> Term
+function evalTerm(term) {
+  return term.eval();
+}
+
+// printTerm : Term -> String
+function printTerm(term) {
+  return term.print();
+}
