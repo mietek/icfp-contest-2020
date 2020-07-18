@@ -38,7 +38,7 @@ function Right(right) {
 function Env() {
   return {
     tag: 'Env',
-    bindings: {},
+    map: new Map(),
   };
 }
 
@@ -74,8 +74,10 @@ function SymTerm(sym) {
   });
 }
 SymTerm.prototype.eval = function (env) {
-  // TODO: Throw an “unbound symbol” exception here
-  return env[this.sym];
+  if (env.map.has(this.sym)) {
+    return env.map.get(this.sym);
+  }
+  return this;
 };
 SymTerm.prototype.print = function () {
   return this.sym;
@@ -95,8 +97,7 @@ function AssignmentTerm(symTerm, term) {
   });
 }
 AssignmentTerm.prototype.eval = function (env) {
-  // TODO: Maybe disallow multiple assignment here
-  env[this.symTerm.sym] = evalTerm(env, this.term);
+  env.map.set(this.symTerm.sym, evalTerm(env, this.term));
   return this;
 };
 AssignmentTerm.prototype.print = function () {
