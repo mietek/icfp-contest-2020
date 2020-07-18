@@ -255,15 +255,15 @@ function readTerm(tokens) {
   }
   switch (tokens[0]) {
     case 'inc':
-      return readUnaryTerm('inc', IncTerm, moreTokens);
+      return readUnaryOp('inc', IncTerm, moreTokens);
     case 'dec':
-      return readUnaryTerm('dec', DecTerm, moreTokens);
+      return readUnaryOp('dec', DecTerm, moreTokens);
     case 'add':
-      return readBinaryTerm('add', AddTerm, moreTokens);
+      return readBinaryOp('add', AddTerm, moreTokens);
     case 'mul':
-      return readBinaryTerm('mul', MulTerm, moreTokens);
+      return readBinaryOp('mul', MulTerm, moreTokens);
     case 'div':
-      return readBinaryTerm('div', DivTerm, moreTokens);
+      return readBinaryOp('div', DivTerm, moreTokens);
     case '(':
       return readTermInParens(moreTokens);
     default:
@@ -271,8 +271,8 @@ function readTerm(tokens) {
   }
 }
 
-// readUnaryTerm : String -> (Term -> Term) -> Array String -> Pair Term (Array String)
-function readUnaryTerm(opName, opConstructor, tokens) {
+// readUnaryOp : String -> (Term -> Term) -> Array String -> Pair Term (Array String)
+function readUnaryOp(opName, opConstructor, tokens) {
   if (tokens.length < 1) {
     throw new Error('Syntax error: ‘' + opName + '’ needs one argument');
   }
@@ -280,8 +280,8 @@ function readUnaryTerm(opName, opConstructor, tokens) {
   return Pair(opConstructor(result.fst), result.snd);
 }
 
-// readBinaryTerm : String -> (Term -> Term -> Term) -> Array String -> Pair Term (Array String)
-function readBinaryTerm(opName, opConstructor, tokens) {
+// readBinaryOp : String -> (Term -> Term -> Term) -> Array String -> Pair Term (Array String)
+function readBinaryOp(opName, opConstructor, tokens) {
   if (tokens.length < 2) {
     throw new Error('Syntax error: ‘' + opName + '’ needs two arguments');
   }
