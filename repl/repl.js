@@ -1381,3 +1381,10 @@ function printUnaryOp(op) {
 function printBinaryOp(op) {
   return op.opName + ' ' + op.arg1.print() + ' ' + op.arg2.print();
 }
+
+
+// Exporting things, but only when in Node environment
+if (typeof window === 'undefined') {
+  //shorthand for {readTerm: readTerm, tokeniseInput: tokeniseInput, ...}
+  module.exports = {readTerm, tokeniseInput, Pair, NumTerm}
+}
