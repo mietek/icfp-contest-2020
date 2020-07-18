@@ -900,7 +900,7 @@ function BitmapResult(bitmap) {
   };
 }
 
-// handleInput : String -> Either String String
+// handleInput : Scope -> String -> Either String String
 function handleInput(scope, inputText) {
   try {
     var tokens = tokenizeInput(inputText);
