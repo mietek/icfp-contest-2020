@@ -186,6 +186,9 @@ var DivTerm = {
     var tag = this.tag;
     return PartialFunctionTerm(function (arg2) {
       return applyBinaryNumOp(scope, tag, arg1, arg2, function (num1, num2) {
+        if (num2 === 0) {
+          return 0;
+        }
         return parseInt(num1 / num2);
       });
     });
@@ -1508,7 +1511,7 @@ assertRight('ap ap div 6 -2', '-3');
 assertRight('ap ap div 5 -3', '-1');
 assertRight('ap ap div -5 3', '-1');
 assertRight('ap ap div -5 -3', '1');
-// assertRight('ap ap div 0 0', 'NaN');
+assertRight('ap ap div 0 0', '0');
 
 assertRight('lt', 'lt');
 assertRight('ap ap lt 0 -1', 'f');
