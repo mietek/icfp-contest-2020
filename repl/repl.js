@@ -519,10 +519,26 @@ var TrueTerm = {
   eval: function () {
     return this;
   },
+  apply: function (x) {
+    return PartialFunctionTerm(function (y) {
+      return x.eval();
+    });
+  },
   print: function () {
     return 't';
   }
 };
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(
+      ApTerm(TrueTerm, NumTerm(1)),
+      NumTerm(5),
+    ).eval(),
+    NumTerm(1),
+  );
+}
 
 // #22. False
 var FalseTerm = {
@@ -530,10 +546,26 @@ var FalseTerm = {
   eval: function () {
     return this;
   },
+  apply: function (x) {
+    return PartialFunctionTerm(function (y) {
+      return y.eval();
+    });
+  },
   print: function () {
     return 'f';
   }
 };
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(
+      ApTerm(FalseTerm, NumTerm(1)),
+      NumTerm(5),
+    ).eval(),
+    NumTerm(5),
+  );
+}
 
 // #23. Power of Two
 // TODO
