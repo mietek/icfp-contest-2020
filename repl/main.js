@@ -1,3 +1,7 @@
+"use strict";
+
+//////////////////////////////////////////////////////////////////////////////
+
 // handleInput : String -> Either String String
 function handleInput(scope, inputText) {
   try {
