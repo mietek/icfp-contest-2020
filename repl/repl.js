@@ -716,6 +716,10 @@ function readTerm(tokens) {
       return readUnaryOp('mod', ModTerm, moreTokens);
 
     // TODO: Implement dem, send
+    case 'dem':
+      throw new Error('‘dem’ is unimplemented');
+    case 'send':
+      throw new Error('‘send’ is unimplemented');
 
     case 'neg':
       return Pair(NegTerm, moreTokens);
@@ -736,6 +740,8 @@ function readTerm(tokens) {
       return Pair(FTerm, moreTokens);
 
     // TODO: Implement pwr
+    case 'pwr':
+      throw new Error('‘pwr’ is unimplemented');
 
     case 'i':
       return Pair(ITerm, moreTokens);
@@ -743,15 +749,26 @@ function readTerm(tokens) {
       return Pair(ConsTerm, moreTokens);
 
     // TODO: Implement car, cdr
+    case 'car':
+      throw new Error('‘car’ is unimplemented');
+    case 'cdr':
+      throw new Error('‘cdr’ is unimplemented');
 
     case 'nil':
       return Pair(NilTerm, moreTokens);
 
     // TODO: Implement isnil
+    case 'isnil':
+      throw new Error('‘isnil’ is unimplemented');
 
     // TODO: Fix lists
     case '(':
-      return readTermInParens(moreTokens);
+      throw new Error('‘(’ is unimplemented');
+      //return readTermInParens(moreTokens);
+    case ')':
+      throw new Error('‘)’ is unimplemented');
+    case ',':
+      throw new Error('‘,’ is unimplemented');
 
     case 'vec':
       return Pair(ConsTerm, moreTokens);
@@ -759,6 +776,11 @@ function readTerm(tokens) {
       return Pair(DrawTerm, moreTokens);
 
     // TODO: Implement checkerboard, if0, interact...
+    // case 'checkerboard':
+    case 'if0':
+      throw new Error('‘if0’ is unimplemented');
+    case 'interact':
+      throw new Error('‘interact’ is unimplemented');
 
     default:
       return returnIdentifierOrReadAssignment(IdentifierTerm(headToken), moreTokens);
@@ -1413,30 +1435,30 @@ if (typeof window === 'undefined') {
       ['nil'],
     ),
   );
-  // Other tests
-  // ap draw (ap ap cons (ap ap cons 1 1) nil)
-  assert.deepEqual(
-    readTerm(tokeniseInput('ap draw (ap ap cons (ap ap cons 1 1) nil)')),
-    Pair(
-      ApTerm(
-        DrawTerm,
-        ApTerm(
-          ApTerm(
-            ConsTerm,
-            ApTerm(
-              ApTerm(
-                ConsTerm,
-                NumTerm(1),
-              ),
-              NumTerm(1),
-            ),
-          ),
-          NilTerm
-        ),
-      ),
-      [],
-    )
-  );
+  // NOTE: This test is bad, because it doesn’t use the contest list syntax
+  // // ap draw (ap ap cons (ap ap cons 1 1) nil)
+  // assert.deepEqual(
+  //   readTerm(tokeniseInput('ap draw (ap ap cons (ap ap cons 1 1) nil)')),
+  //   Pair(
+  //     ApTerm(
+  //       DrawTerm,
+  //       ApTerm(
+  //         ApTerm(
+  //           ConsTerm,
+  //           ApTerm(
+  //             ApTerm(
+  //               ConsTerm,
+  //               NumTerm(1),
+  //             ),
+  //             NumTerm(1),
+  //           ),
+  //         ),
+  //         NilTerm
+  //       ),
+  //     ),
+  //     [],
+  //   )
+  // );
 }
 
 // String-to-string tests based on documentation
