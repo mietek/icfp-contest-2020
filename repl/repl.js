@@ -90,7 +90,6 @@ function AssignmentTerm(identifierTerm, term) {
   }
   return Object.assign(this, {
     tag: 'AssignmentTerm',
-    opName: 'assignment', // TODO: This should probably be '=', but it’s not important
     identifierTerm: identifierTerm,
     term: term,
   });
@@ -107,7 +106,6 @@ AssignmentTerm.prototype.print = function () {
 // #5. Successor
 var IncTerm = {
   tag: 'IncTerm',
-  opName: 'inc',
   eval: function (scope) {
     return this;
   },
@@ -117,14 +115,13 @@ var IncTerm = {
     });
   },
   print: function () {
-    return printUnaryOp(this);
+    return 'inc';
   }
 };
 
 // #6. Predecessor
 var DecTerm = {
   tag: 'DecTerm',
-  opName: 'dec',
   eval: function (scope) {
     return this;
   },
@@ -134,14 +131,13 @@ var DecTerm = {
     });
   },
   print: function () {
-    return printUnaryOp(this);
+    return 'dec';
   }
 };
 
 // #7. Sum
 var AddTerm = {
   tag: 'AddTerm',
-  opName: 'add',
   eval: function (scope) {
     return this;
   },
@@ -154,7 +150,7 @@ var AddTerm = {
     });
   },
   print: function () {
-    return printBinaryOp(this);
+    return 'add';
   }
 };
 
@@ -164,7 +160,6 @@ var AddTerm = {
 // #9. Product
 var MulTerm = {
   tag: 'MulTerm',
-  opName: 'mul',
   eval: function (scope) {
     return this;
   },
@@ -177,14 +172,13 @@ var MulTerm = {
     });
   },
   print: function () {
-    return printBinaryOp(this);
+    return 'mul';
   }
 };
 
 // #10. Integer Division
 var DivTerm = {
   tag: 'DivTerm',
-  opName: 'div',
   eval: function (scope) {
     return this;
   },
@@ -197,14 +191,13 @@ var DivTerm = {
     });
   },
   print: function () {
-    return printBinaryOp(this);
+    return 'div';
   }
 };
 
 // #11. Equality and Booleans
 var EqTerm = {
   tag: 'EqTerm',
-  opName: 'eq',
   eval: function (scope) {
     return this;
   },
@@ -217,7 +210,7 @@ var EqTerm = {
     });
   },
   print: function () {
-    return printBinaryOp(this);
+    return 'eq';
   }
 };
 
@@ -262,7 +255,6 @@ function BoolTerm(bool) {
 // #12. Strict Less-Than
 var LtTerm = {
   tag: 'LtTerm',
-  opName: 'lt',
   eval: function () {
     return this;
   },
@@ -275,7 +267,7 @@ var LtTerm = {
     });
   },
   print: function () {
-    return printBinaryOp(this);
+    return 'lt';
   }
 };
 
@@ -290,7 +282,6 @@ var LtTerm = {
 // #16. Negate
 var NegTerm = {
   tag: 'NegTerm',
-  opName: 'neg',
   eval: function (scope) {
     return this;
   },
@@ -300,7 +291,7 @@ var NegTerm = {
     });
   },
   print: function () {
-    return printUnaryOp(this);
+    return 'neg';
   }
 };
 
@@ -314,8 +305,7 @@ function PartialFunctionTerm(fn) {
   }
   return Object.assign(this, {
     tag: 'PartialFunctionTerm',
-    opName: 'partial',
-    fn: fn,
+    fn: fn
   });
 }
 PartialFunctionTerm.prototype.eval = function (scope) {
@@ -334,7 +324,6 @@ function ApTerm(arg1, arg2) {
   }
   return Object.assign(this, {
     tag: 'ApTerm',
-    opName: 'ap',
     arg1: arg1,
     arg2: arg2,
   });
@@ -353,7 +342,7 @@ ApTerm.prototype.eval = function (scope) {
   }
 };
 ApTerm.prototype.print = function () {
-  return printBinaryOp(this);
+  return 'ap ' + this.arg1.print() + ' ' + this.arg2.print();
 };
 
 // #18. S Combinator
@@ -813,7 +802,7 @@ function evalTerm(scope, term) {
 function applyUnaryNumOp(scope, opTerm, arg, fun) {
   var val = arg.eval();
   if (val.tag != 'NumTerm') {
-    throw new Error('Type error: ‘' + opTerm.opName + '’ needs one numeric argument');
+    throw new Error('Type error: ‘' + opTerm.tag + '’ needs one numeric argument');
   }
   return NumTerm(fun(val.num));
 }
@@ -822,7 +811,7 @@ function applyBinaryNumOp(scope, opTerm, arg1, arg2, fun) {
   var val1 = arg1.eval();
   var val2 = arg2.eval();
   if (val1.tag != 'NumTerm' || val2.tag != 'NumTerm') {
-    throw new Error('Type error: ‘' + opTerm.opName + '’ needs two numeric arguments');
+    throw new Error('Type error: ‘' + opTerm.tag + '’ needs two numeric arguments');
   }
   return NumTerm(fun(val1.num, val2.num));
 }
@@ -831,7 +820,7 @@ function applyBinaryCompOp(scope, opTerm, arg1, arg2, fun) {
   var val1 = arg1.eval();
   var val2 = arg2.eval();
   if (val1.tag != 'NumTerm' || val2.tag != 'NumTerm') {
-    throw new Error('Type error: ‘' + opTerm.opName + '’ needs two numeric arguments');
+    throw new Error('Type error: ‘' + opTerm.tag + '’ needs two numeric arguments');
   }
   return BoolTerm(fun(val1.num, val2.num));
 }
@@ -841,14 +830,6 @@ function applyBinaryCompOp(scope, opTerm, arg1, arg2, fun) {
 // printTerm : Term -> String
 function printTerm(term) {
   return term.print();
-}
-
-function printUnaryOp(op) {
-  return op.opName + ' ' + op.arg1.print();
-}
-
-function printBinaryOp(op) {
-  return op.opName + ' ' + op.arg1.print() + ' ' + op.arg2.print();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -892,7 +873,7 @@ if (typeof window === 'undefined') {
   );
   assert.throws(
     () => ApTerm(IncTerm, IncTerm).eval(Scope()),
-    /Type error: ‘inc’ needs one numeric argument/
+    /Type error: ‘IncTerm’ needs one numeric argument/
   );
 }
 
@@ -904,7 +885,7 @@ if (typeof window === 'undefined') {
   );
   assert.throws(
     () => ApTerm(DecTerm, DecTerm).eval(Scope()),
-    /Type error: ‘dec’ needs one numeric argument/
+    /Type error: ‘DecTerm’ needs one numeric argument/
   );
 }
 
@@ -923,7 +904,7 @@ if (typeof window === 'undefined') {
   );
   assert.throws(
     () => ApTerm(ApTerm(AddTerm, NilTerm), NumTerm(42)).eval(Scope()),
-    /Type error: ‘add’ needs two numeric arguments/,
+    /Type error: ‘AddTerm’ needs two numeric arguments/,
   );
 }
 
@@ -938,7 +919,7 @@ if (typeof window === 'undefined') {
   );
   assert.throws(
     () => ApTerm(ApTerm(MulTerm, NilTerm), NumTerm(42)).eval(Scope()),
-    /Type error: ‘mul’ needs two numeric arguments/,
+    /Type error: ‘MulTerm’ needs two numeric arguments/,
   );
 }
 
@@ -982,7 +963,7 @@ if (typeof window === 'undefined') {
   );
   assert.throws(
     () => ApTerm(ApTerm(DivTerm, NilTerm), NumTerm(42)).eval(Scope()),
-    /Type error: ‘div’ needs two numeric arguments/,
+    /Type error: ‘DivTerm’ needs two numeric arguments/,
   );
 }
 
@@ -1004,7 +985,7 @@ if (typeof window === 'undefined') {
   );
   assert.throws(
     () => ApTerm(ApTerm(EqTerm, NilTerm), NumTerm(42)).eval(Scope()),
-    /Type error: ‘eq’ needs two numeric arguments/,
+    /Type error: ‘EqTerm’ needs two numeric arguments/,
   );
 }
 
@@ -1024,7 +1005,7 @@ if (typeof window === 'undefined') {
   );
   assert.throws(
     () => ApTerm(ApTerm(LtTerm, NilTerm), NumTerm(42)).eval(),
-    /Type error: ‘lt’ needs two numeric arguments/,
+    /Type error: ‘LtTerm’ needs two numeric arguments/,
   );
 }
 
@@ -1040,7 +1021,7 @@ if (typeof window === 'undefined') {
   );
   assert.throws(
     () => ApTerm(NegTerm, NegTerm).eval(Scope()),
-    /Type error: ‘neg’ needs one numeric argument/
+    /Type error: ‘NegTerm’ needs one numeric argument/
   );
 }
 
