@@ -44,54 +44,6 @@ function Scope() {
 
 //////////////////////////////////////////////////////////////////////////////
 
-var NilTerm = {
-  tag: 'NilTerm',
-  eval: function (scope) {
-    return this;
-  },
-  print: function () {
-    return 'nil';
-  }
-};
-
-function BoolTerm(bool) {
-  if (bool) {
-    return TrueTerm;
-  } else {
-    return FalseTerm;
-  }
-}
-
-var TrueTerm = {
-  tag: 'TrueTerm',
-  eval: function (scope) {
-    return this;
-  },
-  apply: function (scope, x) {
-    return PartialFunctionTerm(function (y) {
-      return x.eval(scope);
-    });
-  },
-  print: function () {
-    return 't';
-  }
-};
-
-var FalseTerm = {
-  tag: 'FalseTerm',
-  eval: function (scope) {
-    return this;
-  },
-  apply: function (scope, x) {
-    return PartialFunctionTerm(function (y) {
-      return y.eval(scope);
-    });
-  },
-  print: function () {
-    return 'f';
-  }
-};
-
 // #1, #2, #3. Numbers and negative numbers
 function NumTerm(num) {
   if (!(this instanceof NumTerm)) {
@@ -102,18 +54,17 @@ function NumTerm(num) {
     num: num,
   });
 }
-
 NumTerm.prototype.eval = function (scope) {
   return this;
 };
-
 NumTerm.prototype.print = function () {
   return this.num.toString();
 };
 
 // #4. Equality
-// TODO: Actually, it’s symbol binding, and so, needs environments and dynamic/lexical scoping
+// TODO: Actually, “equality” is symbol binding, and so, needs symbols and scopes
 
+// TODO: Rename “identifier” to “symbol”
 function IdentifierTerm(identifier) {
   if (!(this instanceof IdentifierTerm)) {
     return new IdentifierTerm(identifier);
@@ -123,93 +74,34 @@ function IdentifierTerm(identifier) {
     identifier: identifier,
   });
 }
-
 IdentifierTerm.prototype.eval = function (scope) {
+  // TODO: Throw an “unbound symbol” exception here
   return scope[this.identifier];
 };
-
 IdentifierTerm.prototype.print = function () {
   return this.identifier.toString();
 };
 
+// TODO: Maybe assignments shouldn’t be terms; not sure
+// TODO: Rename variables and members here
 function AssignmentTerm(identifierTerm, term) {
   if (!(this instanceof AssignmentTerm)) {
     return new AssignmentTerm(identifierTerm, term);
   }
   return Object.assign(this, {
     tag: 'AssignmentTerm',
-    opName: 'assignment',
+    opName: 'assignment', // TODO: This should probably be '=', but it’s not important
     identifierTerm: identifierTerm,
     term: term,
   });
 }
-
 AssignmentTerm.prototype.eval = function (scope) {
+  // TODO: Maybe disallow multiple assignment here
   scope[this.identifierTerm.identifier] = this.term;
   return this;
 };
-
 AssignmentTerm.prototype.print = function () {
   return this.identifierTerm.print() + ' = ' + this.term.print();
-};
-
-// #5. Application (this is technically #17, but we need it to test all the
-// binary operators.
-
-// PartialFunctionTerm represents a partially applied function. Partial
-// functions are not created when parsing the input, but they can appear during
-// evaluation.
-function PartialFunctionTerm(fn) {
-  if (!(this instanceof PartialFunctionTerm)) {
-    return new PartialFunctionTerm(fn);
-  }
-  return Object.assign(this, {
-    tag: 'PartialFunctionTerm',
-    opName: 'partial',
-    fn: fn,
-  });
-}
-
-PartialFunctionTerm.prototype.eval = function (scope) {
-  return this;
-};
-
-PartialFunctionTerm.prototype.apply = function (scope, arg) {
-  return this.fn(arg);
-};
-
-PartialFunctionTerm.prototype.print = function (arg) {
-  return '<partial fn>';
-};
-
-function ApTerm(arg1, arg2) {
-  if (!(this instanceof ApTerm)) {
-    return new ApTerm(arg1, arg2);
-  }
-  return Object.assign(this, {
-    tag: 'ApTerm',
-    opName: 'ap',
-    arg1: arg1,
-    arg2: arg2,
-  });
-}
-
-ApTerm.prototype.eval = function (scope) {
-  // Evaluate the first argument and see if it is a function, i.e. whether it
-  // implements the (internal) `apply` method.
-  var value1 = this.arg1.eval(scope);
-  if (value1.apply) {
-    return value1.apply(scope, this.arg2);
-  } else {
-    throw new Error(
-      'Cannot perform application on term: ‘' + this.arg1.tag +
-      '’. Did you forget to implement `apply`?'
-    );
-  }
-};
-
-ApTerm.prototype.print = function () {
-  return printBinaryOp(this);
 };
 
 // #5. Successor
@@ -329,6 +221,44 @@ var EqTerm = {
   }
 };
 
+var TrueTerm = {
+  tag: 'TrueTerm',
+  eval: function (scope) {
+    return this;
+  },
+  apply: function (scope, x) {
+    return PartialFunctionTerm(function (y) {
+      return x.eval(scope);
+    });
+  },
+  print: function () {
+    return 't';
+  }
+};
+
+var FalseTerm = {
+  tag: 'FalseTerm',
+  eval: function (scope) {
+    return this;
+  },
+  apply: function (scope, x) {
+    return PartialFunctionTerm(function (y) {
+      return y.eval(scope);
+    });
+  },
+  print: function () {
+    return 'f';
+  }
+};
+
+function BoolTerm(bool) {
+  if (bool) {
+    return TrueTerm;
+  } else {
+    return FalseTerm;
+  }
+}
+
 // #12. Strict Less-Than
 var LtTerm = {
   tag: 'LtTerm',
@@ -375,7 +305,56 @@ var NegTerm = {
 };
 
 // #17. Function Application
-// See #5: Application. Here we just define more tests.
+// PartialFunctionTerm represents a partially applied function. Partial
+// functions are not created when parsing the input, but they can appear during
+// evaluation.
+function PartialFunctionTerm(fn) {
+  if (!(this instanceof PartialFunctionTerm)) {
+    return new PartialFunctionTerm(fn);
+  }
+  return Object.assign(this, {
+    tag: 'PartialFunctionTerm',
+    opName: 'partial',
+    fn: fn,
+  });
+}
+PartialFunctionTerm.prototype.eval = function (scope) {
+  return this;
+};
+PartialFunctionTerm.prototype.apply = function (scope, arg) {
+  return this.fn(arg);
+};
+PartialFunctionTerm.prototype.print = function (arg) {
+  return '<partial fn>';
+};
+
+function ApTerm(arg1, arg2) {
+  if (!(this instanceof ApTerm)) {
+    return new ApTerm(arg1, arg2);
+  }
+  return Object.assign(this, {
+    tag: 'ApTerm',
+    opName: 'ap',
+    arg1: arg1,
+    arg2: arg2,
+  });
+}
+ApTerm.prototype.eval = function (scope) {
+  // Evaluate the first argument and see if it is a function, i.e. whether it
+  // implements the (internal) `apply` method.
+  var value1 = this.arg1.eval(scope);
+  if (value1.apply) {
+    return value1.apply(scope, this.arg2);
+  } else {
+    throw new Error(
+      'Cannot perform application on term: ‘' + this.arg1.tag +
+      '’. Did you forget to implement `apply`?'
+    );
+  }
+};
+ApTerm.prototype.print = function () {
+  return printBinaryOp(this);
+};
 
 // #18. S Combinator
 var STerm = {
@@ -470,25 +449,6 @@ var ITerm = {
 // Cons is the pair constructor, i.e. it creates a pair when applied using
 // `ap`. By itself, it does not take any arguments.
 // PairTerm is the result of applying cons. It takes two arguments.
-function PairTerm(fst, snd) {
-  if (!(this instanceof PairTerm)) {
-    return new PairTerm(fst, snd);
-  }
-  return Object.assign(this, {
-    tag: 'PairTerm',
-    fst: fst,
-    snd: snd,
-  });
-}
-
-PairTerm.prototype.eval = function (scope) {
-  return this;
-};
-
-PairTerm.prototype.print = function () {
-  return 'cons ' + this.fst.print() + ' ' + this.snd.print();
-};
-
 var ConsTerm = {
   tag: 'ConsTerm',
   eval: function (scope) {
@@ -504,6 +464,23 @@ var ConsTerm = {
   }
 };
 
+function PairTerm(fst, snd) {
+  if (!(this instanceof PairTerm)) {
+    return new PairTerm(fst, snd);
+  }
+  return Object.assign(this, {
+    tag: 'PairTerm',
+    fst: fst,
+    snd: snd,
+  });
+}
+PairTerm.prototype.eval = function (scope) {
+  return this;
+};
+PairTerm.prototype.print = function () {
+  return 'cons ' + this.fst.print() + ' ' + this.snd.print();
+};
+
 // #26. Car (First)
 // TODO
 
@@ -511,7 +488,16 @@ var ConsTerm = {
 // TODO
 
 // #28. Nil (Empty List)
-// See NilTerm defined earlier.
+
+var NilTerm = {
+  tag: 'NilTerm',
+  eval: function (scope) {
+    return this;
+  },
+  print: function () {
+    return 'nil';
+  }
+};
 
 // #29. Is Nil (Is Empty List)
 // TODO
@@ -580,15 +566,12 @@ function ImageTerm(bitmap) {
     bitmap: bitmap,
   });
 }
-
 ImageTerm.prototype.eval = function (scope) {
   return this;
 };
-
 ImageTerm.prototype.print = function () {
   return '[ ' + this.bitmap.map(p => `(${p.fst}, ${p.snd})`).join(',') + ' ]';
 };
-
 ImageTerm.prototype.render = function () {
   const minW = 17;
   const minH = 13;
