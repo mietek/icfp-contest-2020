@@ -683,11 +683,6 @@ function ModulatedTerm(bits) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-// tokeniseInput : String -> Array String
-function tokeniseInput(text) {
-  return text.replace(/\(/g, ' ( ').replace(/\)/g, ' ) ').trim().split(/\s+/);
-}
-
 // readTerm : Array String -> Pair Term (Array String)
 function readTerm(tokens) {
   if (tokens.length == 0) {
@@ -886,6 +881,11 @@ function printTerm(term) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+// tokenizeInput : String -> Array String
+function tokenizeInput(text) {
+  return text.replace(/\(/g, ' ( ').replace(/\)/g, ' ) ').trim().split(/\s+/);
+}
+
 function StringResult(string) {
   return {
     tag: 'StringResult',
@@ -903,7 +903,7 @@ function BitmapResult(bitmap) {
 // handleInput : String -> Either String String
 function handleInput(scope, inputText) {
   try {
-    var tokens = tokeniseInput(inputText);
+    var tokens = tokenizeInput(inputText);
     var termAndMoreTokens = readTerm(tokens);
     var moreTokens = termAndMoreTokens.snd;
     if (moreTokens.length != 0) {
@@ -1334,58 +1334,58 @@ if (typeof window === 'undefined') {
   const assert = require('assert');
   // Numbers and negative numbers
   assert.deepEqual(
-    readTerm(tokeniseInput('42')),
+    readTerm(tokenizeInput('42')),
     Pair(NumTerm(42), []),
   );
   assert.deepEqual(
-    readTerm(tokeniseInput('-42')),
+    readTerm(tokenizeInput('-42')),
     Pair(NumTerm(-42), []),
   );
   // Identifiers
   assert.deepEqual(
-    readTerm(tokeniseInput('foobar')),
+    readTerm(tokenizeInput('foobar')),
     Pair(IdentifierTerm('foobar'), []),
   );
   // Nullary symbols: inc, dec, add, mul, div, eq, lt, neq, cons
   assert.deepEqual(
-    readTerm(tokeniseInput('inc')),
+    readTerm(tokenizeInput('inc')),
     Pair(IncTerm, []),
   );
   assert.deepEqual(
-    readTerm(tokeniseInput('dec')),
+    readTerm(tokenizeInput('dec')),
     Pair(DecTerm, []),
   );
   assert.deepEqual(
-    readTerm(tokeniseInput('add')),
+    readTerm(tokenizeInput('add')),
     Pair(AddTerm, []),
   );
   assert.deepEqual(
-    readTerm(tokeniseInput('mul')),
+    readTerm(tokenizeInput('mul')),
     Pair(MulTerm, []),
   );
   assert.deepEqual(
-    readTerm(tokeniseInput('div')),
+    readTerm(tokenizeInput('div')),
     Pair(DivTerm, []),
   );
   assert.deepEqual(
-    readTerm(tokeniseInput('eq')),
+    readTerm(tokenizeInput('eq')),
     Pair(EqTerm, []),
   );
   assert.deepEqual(
-    readTerm(tokeniseInput('lt')),
+    readTerm(tokenizeInput('lt')),
     Pair(LtTerm, []),
   );
   assert.deepEqual(
-    readTerm(tokeniseInput('neg')),
+    readTerm(tokenizeInput('neg')),
     Pair(NegTerm, []),
   );
   assert.deepEqual(
-    readTerm(tokeniseInput('cons')),
+    readTerm(tokenizeInput('cons')),
     Pair(ConsTerm, []),
   );
   // Binary: application
   assert.deepEqual(
-    readTerm(tokeniseInput('ap inc 37')),
+    readTerm(tokenizeInput('ap inc 37')),
     Pair(ApTerm(IncTerm, NumTerm(37)), []),
   );
 
@@ -1400,12 +1400,12 @@ if (typeof window === 'undefined') {
   assertRight('mul', 'mul');
 
   assert.throws(
-    () => readTerm(tokeniseInput('ap')),
+    () => readTerm(tokenizeInput('ap')),
     /Syntax error: ‘ap’ needs two arguments/
   );
   // Binary: assignment
   assert.deepEqual(
-    readTerm(tokeniseInput('checkerboard = nil')),
+    readTerm(tokenizeInput('checkerboard = nil')),
     Pair(
       AssignmentTerm(
         IdentifierTerm('checkerboard'),
@@ -1415,7 +1415,7 @@ if (typeof window === 'undefined') {
     ),
   );
   assert.deepEqual(
-    readTerm(tokeniseInput('checkerboard = ap nil nil')),
+    readTerm(tokenizeInput('checkerboard = ap nil nil')),
     Pair(
       AssignmentTerm(
         IdentifierTerm('checkerboard'),
@@ -1425,11 +1425,11 @@ if (typeof window === 'undefined') {
     ),
   );
   assert.throws(
-    () => readTerm(tokeniseInput('checkerboard =')),
+    () => readTerm(tokenizeInput('checkerboard =')),
     /Unexpected EOF; expected term/
   );
   assert.deepEqual(
-    readTerm(tokeniseInput('checkerboard = nil nil')),
+    readTerm(tokenizeInput('checkerboard = nil nil')),
     Pair(
       AssignmentTerm(
         IdentifierTerm('checkerboard'),
@@ -1441,7 +1441,7 @@ if (typeof window === 'undefined') {
   // NOTE: This test is bad, because it doesn’t use the contest list syntax
   // // ap draw (ap ap cons (ap ap cons 1 1) nil)
   // assert.deepEqual(
-  //   readTerm(tokeniseInput('ap draw (ap ap cons (ap ap cons 1 1) nil)')),
+  //   readTerm(tokenizeInput('ap draw (ap ap cons (ap ap cons 1 1) nil)')),
   //   Pair(
   //     ApTerm(
   //       DrawTerm,
