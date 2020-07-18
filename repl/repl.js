@@ -96,7 +96,7 @@ function AssignmentTerm(symTerm, term) {
 }
 AssignmentTerm.prototype.eval = function (env) {
   // TODO: Maybe disallow multiple assignment here
-  env[this.symTerm.sym] = this.term;
+  env[this.symTerm.sym] = evalTerm(env, this.term);
   return this;
 };
 AssignmentTerm.prototype.print = function () {
