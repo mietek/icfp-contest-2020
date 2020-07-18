@@ -117,7 +117,7 @@ function MulTerm(term1, term2) {
       var value1 = this.term1.eval();
       var value2 = this.term2.eval();
       if (value1.tag != 'NumTerm' || value2.tag != 'NumTerm') {
-        throw new Error('Type error: ‘add’ needs two numeric arguments');
+        throw new Error('Type error: ‘mul’ needs two numeric arguments');
       }
       return NumTerm(value1.num * value2.num);
     },
