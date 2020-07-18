@@ -13,10 +13,28 @@ function handleInput(inputText) {
     }
     var term = termAndMoreTokens.fst;
     var value = evalTerm(term);
-    return Right(printTerm(value));
+    if (typeof value.render !== 'undefined') {
+      return Right(BitmapResult(value.render()));
+    } else {
+      return Right(StringResult(printTerm(value)));
+    }
   } catch (e) {
     return Left(e.message);
   }
+}
+
+function StringResult(string) {
+  return {
+    tag: 'StringResult',
+    string: string,
+  };
+}
+
+function BitmapResult(bitmap) {
+  return {
+    tag: 'BitmapResult',
+    bitmap: bitmap,
+  };
 }
 
 function replaceSelection(textArea, replaceText) {
@@ -47,13 +65,49 @@ function createParagraph(className, text) {
   return p;
 }
 
+// createBitmapParagraph draws a bitmap on a canvas and returns a paragraph
+// containing the canvas.
+function createBitmapParagraph(className, bitmap) {
+  const pointSize = 10;
+  const bitmapWidth = getBitmapWidth(bitmap);
+  const bitmapHeight = getBitmapHeight(bitmap);
+  const p = document.createElement('p');
+  p.className = className;
+  const canvas = document.createElement('canvas');
+  // add an extra pixel for top/left black frame
+  canvas.width = bitmapWidth * pointSize + 1;
+  canvas.height = bitmapHeight * pointSize + 1;
+  canvas.style.width = 0.5 * canvas.width + 'px';
+  canvas.style.height = 0.5 * canvas.height + 'px';
+  p.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#fff';
+  for (const point of bitmap) {
+    ctx.fillRect(
+      point.fst * pointSize + 1, // account for the top/left frame
+      point.snd * pointSize + 1,
+      pointSize - 1, // leave 1px for spacing
+      pointSize - 1,
+    );
+  }
+  return p;
+}
+
 function appendDialog(outputContainer, inputText, outputResult) {
   var dialogContainer = document.createElement('div');
   var inputP = createParagraph('input', inputText);
+  var outputP;
   if (outputResult.tag == 'Left') {
-    var outputP = createParagraph('output error', outputResult.left);
+    outputP = createParagraph('output error', outputResult.left);
   } else {
-    var outputP = createParagraph('output', outputResult.right);
+    if (outputResult.right.tag === 'StringResult') {
+      outputP = createParagraph('output', outputResult.right.string);
+    }
+    if (outputResult.right.tag === 'BitmapResult') {
+      outputP = createBitmapParagraph('output', outputResult.right.bitmap);
+    }
   }
   dialogContainer.className = 'dialog-container';
   dialogContainer.appendChild(inputP);

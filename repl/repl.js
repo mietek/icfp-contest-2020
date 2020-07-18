@@ -292,7 +292,64 @@ var NilTerm = {
 // TODO
 
 // #32. Draw
-// TODO
+var DrawTerm = {
+  tag: 'DrawTerm',
+  eval: function () {
+    return new ImageTerm([
+      Pair(1, 1),
+      Pair(1, 2),
+      Pair(2, 1),
+      Pair(2, 5),
+    ]);
+  },
+  print: function () {
+    return 'draw';
+  }
+};
+
+function getBitmapWidth(bitmap) {
+  return bitmap.reduce((acc, point) => Math.max(acc, point.fst), 0) + 1;
+};
+
+function getBitmapHeight(bitmap) {
+  return bitmap.reduce((acc, point) => Math.max(acc, point.snd), 0) + 1;
+};
+
+// type Bitmap = [(Int, Int)] (array of x, y pairs)
+// ImageTerm does not appear in the input, but it is the result of evaluating `draw`.
+function ImageTerm(bitmap) {
+  return {
+    tag: 'ImageTerm',
+    bitmap: bitmap,
+    eval: function () {
+      return this;
+    },
+    print: function () {
+      return '[ ' + this.bitmap.map(p => `(${p.fst}, ${p.snd})`).join(',') + ' ]';
+    },
+    render: function () {
+      const minW = 17;
+      const minH = 13;
+      const w = Math.max(minW, getBitmapWidth(this.bitmap));
+      const h = Math.max(minH, getBitmapHeight(this.bitmap));
+      const newBitmap = [];
+      // add image border
+      for (let i = 1; i < w - 1; i++) {
+        newBitmap.push(Pair(i, 0));
+        newBitmap.push(Pair(i, h - 1));
+      }
+      for (let i = 1; i < h - 1; i++) {
+        newBitmap.push(Pair(0, i));
+        newBitmap.push(Pair(w - 1, i));
+      }
+      // offset all points by 1 to account for the border
+      for (let point of this.bitmap) {
+        newBitmap.push(Pair(point.fst + 1, point.snd + 1));
+      }
+      return newBitmap;
+    },
+  };
+};
 
 // #33. Checkerboard
 // TODO
@@ -478,6 +535,8 @@ function readTerm(tokens) {
       return Pair(TrueTerm, moreTokens);
     case 'f':
       return Pair(FalseTerm, moreTokens);
+    case 'draw':
+      return Pair(DrawTerm, moreTokens);
     case '(':
       return readTermInParens(moreTokens);
     default:
