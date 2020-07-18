@@ -849,7 +849,7 @@ function evalTerm(scope, term) {
 }
 
 function applyUnaryNumOp(scope, tag, arg, fun) {
-  var val = arg.eval();
+  var val = arg.eval(scope);
   if (val.tag != 'NumTerm') {
     throw new Error('Type error: ‘' + tag + '’ needs one numeric argument');
   }
@@ -857,8 +857,8 @@ function applyUnaryNumOp(scope, tag, arg, fun) {
 }
 
 function applyBinaryNumOp(scope, tag, arg1, arg2, fun) {
-  var val1 = arg1.eval();
-  var val2 = arg2.eval();
+  var val1 = arg1.eval(scope);
+  var val2 = arg2.eval(scope);
   if (val1.tag != 'NumTerm' || val2.tag != 'NumTerm') {
     throw new Error('Type error: ‘' + tag + '’ needs two numeric arguments');
   }
@@ -866,8 +866,8 @@ function applyBinaryNumOp(scope, tag, arg1, arg2, fun) {
 }
 
 function applyBinaryCompOp(scope, tag, arg1, arg2, fun) {
-  var val1 = arg1.eval();
-  var val2 = arg2.eval();
+  var val1 = arg1.eval(scope);
+  var val2 = arg2.eval(scope);
   if (val1.tag != 'NumTerm' || val2.tag != 'NumTerm') {
     throw new Error('Type error: ‘' + tag + '’ needs two numeric arguments');
   }
@@ -1090,19 +1090,19 @@ if (typeof window === 'undefined') {
 if (typeof window === 'undefined') {
   const assert = require('assert');
   assert.deepEqual(
-    ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(-2)).eval(),
+    ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(-2)).eval(Scope()),
     FTerm,
   );
   assert.deepEqual(
-    ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(0)).eval(),
+    ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(0)).eval(Scope()),
     FTerm,
   );
   assert.deepEqual(
-    ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(2)).eval(),
+    ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(2)).eval(Scope()),
     TTerm,
   );
   assert.throws(
-    () => ApTerm(ApTerm(LtTerm, NilTerm), NumTerm(42)).eval(),
+    () => ApTerm(ApTerm(LtTerm, NilTerm), NumTerm(42)).eval(Scope()),
     /Type error: ‘LtTerm’ needs two numeric arguments/,
   );
 }
@@ -1162,7 +1162,7 @@ if (typeof window === 'undefined') {
   //       ApTerm(AddTerm, NumTerm(1)),
   //     ),
   //     NumTerm(1),
-  //   ).eval(),
+  //   ).eval(Scope()),
   //   NumTerm(42),
   // );
 }
