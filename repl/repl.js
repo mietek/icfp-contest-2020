@@ -60,6 +60,50 @@ if (typeof window === 'undefined') {
 // #4. Equality
 // TODO: Actually, it’s symbol binding, and so, needs environments and dynamic/lexical scoping
 
+function IdentifierTerm(identifier) {
+  if (!(this instanceof IdentifierTerm)) {
+    return new IdentifierTerm(identifier);
+  }
+  return Object.assign(this, {
+    tag: 'IdentifierTerm',
+    identifier: identifier,
+  });
+}
+
+IdentifierTerm.prototype.eval = function () {
+  // TODO: look up the identifier in the environment
+  return this;
+};
+
+IdentifierTerm.prototype.print = function () {
+  return this.identifier.toString();
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.strictEqual(IdentifierTerm('foo').print(), 'foo');
+}
+
+function AssignmentTerm(arg1, arg2) {
+  if (!(this instanceof AssignmentTerm)) {
+    return new AssignmentTerm(arg1, arg2);
+  }
+  return Object.assign(this, {
+    tag: 'AssignmentTerm',
+    opName: 'assignment',
+    arg1: arg1,
+    arg2: arg2,
+  });
+}
+
+AssignmentTerm.prototype.eval = function () {
+  // TODO: modify the environment
+};
+
+AssignmentTerm.prototype.print = function () {
+  return this.identifier.print() + ' = ' + this.term.print();
+};
+
 // #5. Application
 function ApTerm(arg1, arg2) {
   if (!(this instanceof ApTerm)) {
@@ -573,10 +617,25 @@ function readTerm(tokens) {
     return Pair(NumTerm(Number(headToken)), moreTokens);
   }
   switch (tokens[0]) {
+    // Unary symbols
     case 'inc':
       return Pair(IncTerm, moreTokens);
     case 'dec':
       return Pair(DecTerm, moreTokens);
+    case 't':
+      return Pair(TrueTerm, moreTokens);
+    case 'f':
+      return Pair(FalseTerm, moreTokens);
+    case 'draw':
+      return Pair(DrawTerm, moreTokens);
+
+    // Binary symbols
+    case 'nil':
+      return Pair(NilTerm, moreTokens);
+    case 'ap':
+      return readBinaryOp('ap', ApTerm, moreTokens);
+
+    // TODO: clean up these symbols
     case 'mod':
       return readUnaryOp('mod', ModTerm, moreTokens);
     case 'add':
@@ -589,50 +648,15 @@ function readTerm(tokens) {
       return readBinaryOp('eq', EqTerm, moreTokens);
     case 'lt':
       return readBinaryOp('lt', LtTerm, moreTokens);
-    case 'ap':
-      return readBinaryOp('ap', ApTerm, moreTokens);
-    case 't':
-      return Pair(TrueTerm, moreTokens);
-    case 'f':
-      return Pair(FalseTerm, moreTokens);
-    case 'draw':
-      return Pair(DrawTerm, moreTokens);
+
+    // Other, more complicated cases
     case '(':
       return readTermInParens(moreTokens);
     default:
-      throw new Error('Unrecognized token: ‘' + headToken + '’');
+      return returnIdentifierOrReadAssignment(IdentifierTerm(headToken), moreTokens);
+      // return Pair(IdentifierTerm(headToken), moreTokens);
+      // throw new Error('Unrecognized token: ‘' + headToken + '’');
   }
-}
-
-if (typeof window === 'undefined') {
-  const assert = require('assert');
-  // Numbers and negative numbers
-  assert.deepEqual(
-    readTerm(tokeniseInput('42')),
-    Pair(NumTerm(42), []),
-  );
-  assert.deepEqual(
-    readTerm(tokeniseInput('-42')),
-    Pair(NumTerm(-42), []),
-  );
-  // Nullary symbols: inc, dec
-  assert.deepEqual(
-    readTerm(tokeniseInput('inc')),
-    Pair(IncTerm, []),
-  );
-  assert.deepEqual(
-    readTerm(tokeniseInput('dec')),
-    Pair(DecTerm, []),
-  );
-  // Application
-  assert.deepEqual(
-    readTerm(tokeniseInput('ap inc 37')),
-    Pair(ApTerm(IncTerm, NumTerm(37)), []),
-  );
-  assert.throws(
-    () => readTerm(tokeniseInput('ap')),
-    /Syntax error: ‘ap’ needs two arguments/
-  );
 }
 
 // readUnaryOp : String -> (Term -> Term) -> Array String -> Pair Term (Array String)
@@ -669,6 +693,91 @@ function readTermInParens(tokens) {
   }
   var term = result.fst;
   return Pair(term, moreTokens.slice(1));
+}
+
+// returnIdentifierOrReadAssignment : IdentifierTerm -> Array String -> (Term, Array String)
+function returnIdentifierOrReadAssignment(identifierTerm, tokens) {
+  if (tokens.length === 0) {
+    return Pair(identifierTerm, []);
+  }
+  var headToken = tokens[0];
+  var moreTokens = tokens.slice(1);
+  if (headToken === '=') {
+    var result = readTerm(moreTokens);
+    return Pair(AssignmentTerm(identifierTerm, result.fst), result.snd);
+  }
+  return tokens;
+}
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  // Numbers and negative numbers
+  assert.deepEqual(
+    readTerm(tokeniseInput('42')),
+    Pair(NumTerm(42), []),
+  );
+  assert.deepEqual(
+    readTerm(tokeniseInput('-42')),
+    Pair(NumTerm(-42), []),
+  );
+  // Identifiers
+  assert.deepEqual(
+    readTerm(tokeniseInput('foobar')),
+    Pair(IdentifierTerm('foobar'), []),
+  );
+  // Nullary symbols: inc, dec
+  assert.deepEqual(
+    readTerm(tokeniseInput('inc')),
+    Pair(IncTerm, []),
+  );
+  assert.deepEqual(
+    readTerm(tokeniseInput('dec')),
+    Pair(DecTerm, []),
+  );
+  // Binary: application
+  assert.deepEqual(
+    readTerm(tokeniseInput('ap inc 37')),
+    Pair(ApTerm(IncTerm, NumTerm(37)), []),
+  );
+  assert.throws(
+    () => readTerm(tokeniseInput('ap')),
+    /Syntax error: ‘ap’ needs two arguments/
+  );
+  // Binary: assignment
+  assert.deepEqual(
+    readTerm(tokeniseInput('checkerboard = nil')),
+    Pair(
+      AssignmentTerm(
+        IdentifierTerm('checkerboard'),
+        NilTerm,
+      ),
+      [],
+    ),
+  );
+  assert.deepEqual(
+    readTerm(tokeniseInput('checkerboard = ap nil nil')),
+    Pair(
+      AssignmentTerm(
+        IdentifierTerm('checkerboard'),
+        ApTerm(NilTerm, NilTerm),
+      ),
+      [],
+    ),
+  );
+  assert.throws(
+    () => readTerm(tokeniseInput('checkerboard =')),
+    /Unexpected EOF; expected term/
+  );
+  assert.deepEqual(
+    readTerm(tokeniseInput('checkerboard = nil nil')),
+    Pair(
+      AssignmentTerm(
+        IdentifierTerm('checkerboard'),
+        NilTerm,
+      ),
+      ['nil'],
+    ),
+  );
 }
 
 //////////////////////////////////////////////////////////////////////////////
