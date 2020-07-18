@@ -110,7 +110,7 @@ var IncTerm = {
     return this;
   },
   apply: function (scope, arg) {
-    return applyUnaryNumOp(scope, this, arg, function (num) {
+    return applyUnaryNumOp(scope, this.tag, arg, function (num) {
       return num + 1;
     });
   },
@@ -126,7 +126,7 @@ var DecTerm = {
     return this;
   },
   apply: function (scope, arg) {
-    return applyUnaryNumOp(scope, this, arg, function (num) {
+    return applyUnaryNumOp(scope, this.tag, arg, function (num) {
       return num - 1;
     });
   },
@@ -142,9 +142,9 @@ var AddTerm = {
     return this;
   },
   apply: function (scope, arg1) {
-    var opTerm = this;
+    var tag = this.tag;
     return PartialFunctionTerm(function (arg2) {
-      return applyBinaryNumOp(scope, opTerm, arg1, arg2, function (num1, num2) {
+      return applyBinaryNumOp(scope, tag, arg1, arg2, function (num1, num2) {
         return num1 + num2;
       });
     });
@@ -164,9 +164,9 @@ var MulTerm = {
     return this;
   },
   apply: function (scope, arg1) {
-    var opTerm = this;
+    var tag = this.tag;
     return PartialFunctionTerm(function (arg2) {
-      return applyBinaryNumOp(scope, opTerm, arg1, arg2, function (num1, num2) {
+      return applyBinaryNumOp(scope, tag, arg1, arg2, function (num1, num2) {
         return num1 * num2;
       });
     });
@@ -183,9 +183,9 @@ var DivTerm = {
     return this;
   },
   apply: function (scope, arg1) {
-    var opTerm = this;
+    var tag = this.tag;
     return PartialFunctionTerm(function (arg2) {
-      return applyBinaryNumOp(scope, opTerm, arg1, arg2, function (num1, num2) {
+      return applyBinaryNumOp(scope, tag, arg1, arg2, function (num1, num2) {
         return parseInt(num1 / num2);
       });
     });
@@ -202,9 +202,9 @@ var EqTerm = {
     return this;
   },
   apply: function (scope, arg1) {
-    var opTerm = this;
+    var tag = this.tag;
     return PartialFunctionTerm(function (arg2) {
-      return applyBinaryCompOp(scope, opTerm, arg1, arg2, function (num1, num2) {
+      return applyBinaryCompOp(scope, tag, arg1, arg2, function (num1, num2) {
         return num1 === num2;
       });
     });
@@ -259,9 +259,9 @@ var LtTerm = {
     return this;
   },
   apply: function (scope, arg1) {
-    var opTerm = this;
+    var tag = this.tag;
     return PartialFunctionTerm(function (arg2) {
-      return applyBinaryCompOp(scope, opTerm, arg1, arg2, function (num1, num2) {
+      return applyBinaryCompOp(scope, tag, arg1, arg2, function (num1, num2) {
         return num1 < num2;
       });
     });
@@ -286,7 +286,7 @@ var NegTerm = {
     return this;
   },
   apply: function (scope, arg) {
-    return applyUnaryNumOp(scope, this, arg, function (num) {
+    return applyUnaryNumOp(scope, this.tag, arg, function (num) {
       return -num;
     });
   },
@@ -799,28 +799,28 @@ function evalTerm(scope, term) {
   return term.eval(scope);
 }
 
-function applyUnaryNumOp(scope, opTerm, arg, fun) {
+function applyUnaryNumOp(scope, tag, arg, fun) {
   var val = arg.eval();
   if (val.tag != 'NumTerm') {
-    throw new Error('Type error: ‘' + opTerm.tag + '’ needs one numeric argument');
+    throw new Error('Type error: ‘' + tag + '’ needs one numeric argument');
   }
   return NumTerm(fun(val.num));
 }
 
-function applyBinaryNumOp(scope, opTerm, arg1, arg2, fun) {
+function applyBinaryNumOp(scope, tag, arg1, arg2, fun) {
   var val1 = arg1.eval();
   var val2 = arg2.eval();
   if (val1.tag != 'NumTerm' || val2.tag != 'NumTerm') {
-    throw new Error('Type error: ‘' + opTerm.tag + '’ needs two numeric arguments');
+    throw new Error('Type error: ‘' + tag + '’ needs two numeric arguments');
   }
   return NumTerm(fun(val1.num, val2.num));
 }
 
-function applyBinaryCompOp(scope, opTerm, arg1, arg2, fun) {
+function applyBinaryCompOp(scope, tag, arg1, arg2, fun) {
   var val1 = arg1.eval();
   var val2 = arg2.eval();
   if (val1.tag != 'NumTerm' || val2.tag != 'NumTerm') {
-    throw new Error('Type error: ‘' + opTerm.tag + '’ needs two numeric arguments');
+    throw new Error('Type error: ‘' + tag + '’ needs two numeric arguments');
   }
   return BoolTerm(fun(val1.num, val2.num));
 }
