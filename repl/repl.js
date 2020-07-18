@@ -339,7 +339,7 @@ ApTerm.prototype.eval = function (env) {
     return value1.apply(env, this.arg2);
   } else {
     throw new Error(
-      'Cannot perform application on term: ‘' + this.arg1.tag +
+      'Cannot perform application on term: ‘' + value1.tag +
       '’. Did you forget to implement `apply`?'
     );
   }
