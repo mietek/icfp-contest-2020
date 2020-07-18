@@ -489,7 +489,37 @@ function LtTerm(arg1, arg2) {
 // TODO
 
 // #16. Negate
-// TODO
+var NegTerm = {
+  tag: 'NegTerm',
+  opName: 'neg',
+  eval: function () {
+    return this;
+  },
+  apply: function (arg) {
+    return applyUnaryNumOp(this, arg, function (num) {
+      return -num;
+    });
+  },
+  print: function () {
+    return printUnaryOp(this);
+  }
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(NegTerm, NumTerm(0)).eval(),
+    NumTerm(0),
+  );
+  assert.deepEqual(
+    ApTerm(NegTerm, NumTerm(1)).eval(),
+    NumTerm(-1),
+  );
+  assert.throws(
+    () => ApTerm(NegTerm, NegTerm).eval(),
+    /Type error: ‘neg’ needs one numeric argument/
+  );
+}
 
 // #17. Function Application
 // See #5: Application. Here we just define more tests.
@@ -958,6 +988,8 @@ function readTerm(tokens) {
       return Pair(EqTerm, moreTokens);
     case 'lt':
       return Pair(LtTerm, moreTokens);
+    case 'neg':
+      return Pair(NegTerm, moreTokens);
     case 't':
       return Pair(TrueTerm, moreTokens);
     case 'f':
@@ -1051,7 +1083,7 @@ if (typeof window === 'undefined') {
     readTerm(tokeniseInput('foobar')),
     Pair(IdentifierTerm('foobar'), []),
   );
-  // Nullary symbols: inc, dec, add, mul, div, eq, lt
+  // Nullary symbols: inc, dec, add, mul, div, eq, lt, neq
   assert.deepEqual(
     readTerm(tokeniseInput('inc')),
     Pair(IncTerm, []),
@@ -1079,6 +1111,10 @@ if (typeof window === 'undefined') {
   assert.deepEqual(
     readTerm(tokeniseInput('lt')),
     Pair(LtTerm, []),
+  );
+  assert.deepEqual(
+    readTerm(tokeniseInput('neg')),
+    Pair(NegTerm, []),
   );
   // Binary: application
   assert.deepEqual(
