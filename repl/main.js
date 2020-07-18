@@ -58,6 +58,40 @@ function createBitmapParagraph(className, bitmap) {
   return p;
 }
 
+
+function createMultipleBitmapParagraph(className, bitmaps) {
+  const pointSize = 10;
+  // assuming all bitmaps are of the same size
+  const bitmap0 = bitmaps[0];
+  const bitmapWidth = getBitmapWidth(bitmap0);
+  const bitmapHeight = getBitmapHeight(bitmap0);
+  const p = document.createElement('p');
+  p.className = className;
+  const canvas = document.createElement('canvas');
+  // add an extra pixel for top/left black frame
+  canvas.width = bitmapWidth * pointSize + 1;
+  canvas.height = bitmapHeight * pointSize + 1;
+  canvas.style.width = 0.5 * canvas.width + 'px';
+  canvas.style.height = 0.5 * canvas.height + 'px';
+  p.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  for (const [i, bitmap] of bitmaps.entries()) {
+    // todo change the color based on i and some fancy heuristics
+    ctx.fillStyle = '#fff';
+    for (const point of bitmap) {
+      ctx.fillRect(
+        point.fst * pointSize + 1, // account for the top/left frame
+        point.snd * pointSize + 1,
+        pointSize - 1, // leave 1px for spacing
+        pointSize - 1,
+      );
+    }
+  }
+  return p;
+}
+
 function appendDialog(outputContainer, inputText, outputResult) {
   var dialogContainer = document.createElement('div');
   var inputP = createParagraph('input', inputText);
@@ -68,8 +102,11 @@ function appendDialog(outputContainer, inputText, outputResult) {
     if (outputResult.right.tag === 'StringResult') {
       outputP = createParagraph('output', outputResult.right.string);
     }
-    if (outputResult.right.tag === 'BitmapResult') {
-      outputP = createBitmapParagraph('output', outputResult.right.bitmap);
+    // if (outputResult.right.tag === 'BitmapResult') {
+    //   outputP = createBitmapParagraph('output', outputResult.right.bitmap);
+    // }
+    if (outputResult.right.tag === 'MultiBitmapResult') {
+      outputP = createMultipleBitmapParagraph('output', outputResult.right.bitmaps);
     }
   }
   dialogContainer.className = 'dialog-container';

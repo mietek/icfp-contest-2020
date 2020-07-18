@@ -553,11 +553,10 @@ var DrawTerm = {
     return this;
   },
   apply: function (env, arg) {
-    const bitmap = [];
-    var walk = (arg) => {
+    var walk = (arg, acc) => {
       const list = arg.eval(env);
       if (list.tag === 'NilTerm') {
-        return;
+        return acc;
       }
       if (list.tag !== 'PairTerm') {
         throw new Error('Type error: ‘draw’ expects a list');
@@ -574,14 +573,71 @@ var DrawTerm = {
         throw new Error('Type error: ‘draw’ expects list elements to be pairs of numbers');
       }
       const point = Pair(xTerm.num, yTerm.num);
-      bitmap.push(point);
-      walk(list.snd);
+      acc.push(point);
+      return walk(list.snd, acc);
     };
-    walk(arg);
+    const bitmap = walk(arg, []);
     return ImageTerm(bitmap);
   },
   print: function () {
     return 'draw';
+  }
+};
+var MultiDrawTerm = {
+  tag: 'MultiDrawTerm',
+  eval: function (env) {
+    return this;
+  },
+  apply: function (env, arg) {
+    // walk : List Pair -> Bitmap
+    var walk = (arg, acc) => {
+      const list = arg.eval(env);
+      if (list.tag === 'NilTerm'){
+        return acc;
+      }
+      if (list.tag !== 'PairTerm') {
+        throw new Error('Type error: ‘multipledraw’ expects a list of lists');
+      }
+      const head = list.fst.eval(env);
+      if (head.tag !== 'PairTerm') {
+        throw new Error(
+          'Type error: ‘multipledraw’ expects list of list elements to be pairs, got ' + head.tag
+        );
+      }
+      const xTerm = head.fst.eval(env);
+      const yTerm = head.snd.eval(env);
+      if (xTerm.tag !== 'NumTerm' || yTerm.tag !== 'NumTerm') {
+        throw new Error('Type error: ‘multipledraw’ expects list elements to be pairs of numbers');
+      }
+      const point = Pair(xTerm.num, yTerm.num);
+      const newAcc = acc.concat([point]);
+      return walk(list.snd, newAcc);
+    }
+    // externalWalk : List List Pair -> List Bitmap -> List Bitmap
+    var externalWalk = (arg, acc) => {
+      const listOfLists = arg.eval(env);
+
+      if (listOfLists.tag === 'NilTerm') {
+        return acc;
+      }
+      if (listOfLists.tag !== 'PairTerm') {
+        throw new Error('Type error: ‘multipledraw’ expects a list');
+      }
+      const headList = listOfLists.fst.eval(env);
+      if (headList.tag !== 'PairTerm') {
+        throw new Error(
+          'Type error: ‘multipledraw’ expects list elements to be pairs, got ' + head.tag
+        );
+      }
+      const bitmap = walk(headList, []);
+      const newAcc = acc.concat([bitmap])
+      return externalWalk(listOfLists.snd, newAcc);
+    }
+    const bitmaps = externalWalk(arg, []);
+    return MultiImageTerm(bitmaps);
+  },
+  print: function () {
+    return 'multipledraw';
   }
 };
 
@@ -629,14 +685,55 @@ ImageTerm.prototype.render = function () {
   for (let point of this.bitmap) {
     newBitmap.push(Pair(point.fst + 1, point.snd + 1));
   }
-  return newBitmap;
+  return [newBitmap];
 };
 
 // #33. Checkerboard
 // TODO
 
 // #34. Multiple Draw
-// TODO
+// type Bitmaps = [[(Int, Int)]] (array of arrays of x, y pairs)
+function MultiImageTerm(bitmaps) {
+  if (!(this instanceof MultiImageTerm)) {
+    return new MultiImageTerm(bitmaps);
+  }
+  return Object.assign(this, {
+    tag: 'MultiImageTerm',
+    bitmaps: bitmaps,
+  });
+}
+MultiImageTerm.prototype.eval = function (env) {
+  return this;
+};
+MultiImageTerm.prototype.print = function () {
+  return '[ ' + this.bitmaps.map(b => '[ ' + b.map(p => `(${p.fst}, ${p.snd})`).join(',') + ' ]').join(",") + ' ]';
+};
+MultiImageTerm.prototype.render = function () {
+  const minW = 17;
+  const minH = 13;
+  // assuming all bitmaps have the same size
+  const w = Math.max(minW, getBitmapWidth(this.bitmaps[0]));
+  const h = Math.max(minH, getBitmapHeight(this.bitmaps[0]));
+  const bitmapsWithBorders = [];
+  for (const bitmap of this.bitmaps) {
+    const newBitmap = [];
+    // add image border
+    for (let i = 1; i < w - 1; i++) {
+      newBitmap.push(Pair(i, 0));
+      newBitmap.push(Pair(i, h - 1));
+    }
+    for (let i = 1; i < h - 1; i++) {
+      newBitmap.push(Pair(0, i));
+      newBitmap.push(Pair(w - 1, i));
+    }
+    // offset all points by 1 to account for the border
+    for (let point of bitmap) {
+      newBitmap.push(Pair(point.fst + 1, point.snd + 1));
+    }
+    bitmapsWithBorders.push(newBitmap);
+  }
+  return bitmapsWithBorders;
+};
 
 // #35. Modulate List
 
@@ -810,7 +907,13 @@ function readTerm(tokens) {
     case 'draw':
       return Pair(DrawTerm, moreTokens);
 
+
+    case 'multipledraw':
+      return Pair(MultiDrawTerm, moreTokens);
+
     // TODO: Implement if0, interact...
+    // case 'checkerboard':
+
     case 'if0':
       throw new Error('‘if0’ is unimplemented');
     case 'interact':
@@ -936,6 +1039,13 @@ function BitmapResult(bitmap) {
   };
 }
 
+function MultiBitmapResult(bitmaps) {
+  return {
+    tag: 'MultiBitmapResult',
+    bitmaps: bitmaps,
+  };
+}
+
 // handleInput : Env -> String -> Either String String
 function handleInput(env, inputText) {
   try {
@@ -948,7 +1058,7 @@ function handleInput(env, inputText) {
     var term = termAndMoreTokens.fst;
     var value = evalTerm(env, term);
     if (typeof value.render !== 'undefined') {
-      return Right(BitmapResult(value.render()));
+      return Right(MultiBitmapResult(value.render()));
     } else {
       return Right(StringResult(printTerm(value)));
     }
