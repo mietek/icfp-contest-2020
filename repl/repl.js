@@ -170,20 +170,6 @@ ApTerm.prototype.eval = function () {
   }
 };
 
-// ApTerm.prototype.apply = function () {
-//   // This is called whenever ap is nested in ap, e.g. ap ap add 1 2.
-//   // We first evaluate the 2nd argument, then create a
-//   // eval 2nd arg
-//   if (this.arg1.apply) {
-//     return this.arg1.apply(this.arg2);
-//   } else {
-//     throw new Error(
-//       'Cannot perform application on term: ‘' + this.arg1.tag +
-//       '’. Did you forget to implement `apply`?'
-//     );
-//   }
-// };
-
 ApTerm.prototype.print = function () {
   return printBinaryOp(this);
 };
