@@ -434,12 +434,75 @@ if (typeof window === 'undefined') {
   // );
 }
 
-
 // #19. C Combinator
-// TODO
+var CTerm = {
+  tag: 'CTerm',
+  eval: function () {
+    return this;
+  },
+  apply: function (x) {
+    return PartialFunctionTerm(function (y) {
+      return PartialFunctionTerm(function (z) {
+        return ApTerm(
+          ApTerm(x, z),
+          y,
+        ).eval();
+      });
+    });
+  },
+  print: function () {
+    return 'c';
+  }
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(
+      ApTerm(
+        ApTerm(CTerm, AddTerm),
+        NumTerm(1),
+      ),
+      NumTerm(2),
+    ).eval(),
+    NumTerm(3),
+  );
+}
 
 // #20. B Combinator
-// TODO
+var BTerm = {
+  tag: 'CTerm',
+  eval: function () {
+    return this;
+  },
+  apply: function (x) {
+    return PartialFunctionTerm(function (y) {
+      return PartialFunctionTerm(function (z) {
+        return ApTerm(
+          x,
+          ApTerm(y, z),
+        ).eval();
+      });
+    });
+  },
+  print: function () {
+    return 'b';
+  }
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(
+      ApTerm(
+        ApTerm(BTerm, IncTerm),
+        DecTerm,
+      ),
+      NumTerm(2),
+    ).eval(),
+    NumTerm(2),
+  );
+}
 
 // #21, #22. Booleans
 function BoolTerm(bool) {
