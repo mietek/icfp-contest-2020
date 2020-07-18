@@ -44,9 +44,6 @@ function NumTerm(num) {
     }
   };
 }
-NumTerm.read = function (tokens) {
-  return Pair(NumTerm(Number(tokens[0])), tokens.slice(1));
-};
 
 // #4. Equality
 // TODO: Actually, it’s symbol binding, and so, needs environments and dynamic/lexical scoping
@@ -68,13 +65,6 @@ function IncTerm(term) {
     }
   };
 }
-IncTerm.read = function (tokens) {
-  if (tokens.length == 0) {
-    throw new Error('Syntax error: ‘inc’ needs an argument');
-  }
-  var result = readTerm(tokens);
-  return Pair(IncTerm(result.fst), result.snd);
-};
 
 // #6. Predecessor
 function DecTerm(term) {
@@ -93,13 +83,6 @@ function DecTerm(term) {
     }
   };
 }
-DecTerm.read = function (tokens) {
-  if (tokens.length == 0) {
-    throw new Error('Syntax error: ‘dec’ needs an argument');
-  }
-  var result = readTerm(tokens);
-  return Pair(DecTerm(result.fst), result.snd);
-};
 
 // #7. Sum
 function AddTerm(term1, term2) {
@@ -120,14 +103,6 @@ function AddTerm(term1, term2) {
     }
   };
 }
-AddTerm.read = function (tokens) {
-  if (tokens.length < 2) {
-    throw new Error('Syntax error: ‘add’ needs two arguments');
-  }
-  var result1 = readTerm(tokens);
-  var result2 = readTerm(result1.snd);
-  return Pair(AddTerm(result1.fst, result2.fst), result2.snd);
-};
 
 // #8. Variables
 // TODO: Let’s hope we won’t need to deal with them
@@ -151,14 +126,6 @@ function MulTerm(term1, term2) {
     }
   };
 }
-MulTerm.read = function (tokens) {
-  if (tokens.length < 2) {
-    throw new Error('Syntax error: ‘mul’ needs two arguments');
-  }
-  var result1 = readTerm(tokens);
-  var result2 = readTerm(result1.snd);
-  return Pair(MulTerm(result1.fst, result2.fst), result2.snd);
-};
 
 // #10. Integer Division
 function DivTerm(term1, term2) {
@@ -179,14 +146,6 @@ function DivTerm(term1, term2) {
     }
   };
 }
-DivTerm.read = function (tokens) {
-  if (tokens.length < 2) {
-    throw new Error('Syntax error: ‘div’ needs two arguments');
-  }
-  var result1 = readTerm(tokens);
-  var result2 = readTerm(result1.snd);
-  return Pair(DivTerm(result1.fst, result2.fst), result2.snd);
-};
 
 // #11. Equality and Booleans
 // TODO
@@ -289,25 +248,46 @@ function readTerm(tokens) {
   if (tokens.length == 0) {
     throw new Error('Unexpected EOF; expected term');
   }
-  if (/^-?[0-9]+$/.test(tokens[0])) {
-    return NumTerm.read(tokens);
+  var headToken = tokens[0];
+  var moreTokens = tokens.slice(1);
+  if (/^-?[0-9]+$/.test(headToken)) {
+    return Pair(NumTerm(Number(headToken)), moreTokens);
   }
   switch (tokens[0]) {
     case 'inc':
-      return IncTerm.read(tokens.slice(1));
+      return readUnaryTerm('inc', IncTerm, moreTokens);
     case 'dec':
-      return DecTerm.read(tokens.slice(1));
+      return readUnaryTerm('dec', DecTerm, moreTokens);
     case 'add':
-      return AddTerm.read(tokens.slice(1));
+      return readBinaryTerm('add', AddTerm, moreTokens);
     case 'mul':
-      return MulTerm.read(tokens.slice(1));
+      return readBinaryTerm('mul', MulTerm, moreTokens);
     case 'div':
-      return DivTerm.read(tokens.slice(1));
+      return readBinaryTerm('div', DivTerm, moreTokens);
     case '(':
-      return readTermInParens(tokens.slice(1));
+      return readTermInParens(moreTokens);
     default:
-      throw new Error('Unrecognized token: ‘' + tokens[0] + '’');
+      throw new Error('Unrecognized token: ‘' + headToken + '’');
   }
+}
+
+// readUnaryTerm : String -> (Term -> Term) -> Array String -> Pair Term (Array String)
+function readUnaryTerm(opName, opConstructor, tokens) {
+  if (tokens.length < 1) {
+    throw new Error('Syntax error: ‘' + opName + '’ needs one argument');
+  }
+  var result = readTerm(tokens);
+  return Pair(opConstructor(result.fst), result.snd);
+}
+
+// readBinaryTerm : String -> (Term -> Term -> Term) -> Array String -> Pair Term (Array String)
+function readBinaryTerm(opName, opConstructor, tokens) {
+  if (tokens.length < 2) {
+    throw new Error('Syntax error: ‘' + opName + '’ needs two arguments');
+  }
+  var result1 = readTerm(tokens);
+  var result2 = readTerm(result1.snd);
+  return Pair(opConstructor(result1.fst, result2.fst), result2.snd);
 }
 
 // readTermInParens : Array String -> Pair Term (Array String)
