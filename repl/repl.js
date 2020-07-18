@@ -45,6 +45,44 @@ var NilTerm = {
   }
 };
 
+function BoolTerm(bool) {
+  if (bool) {
+    return TrueTerm;
+  } else {
+    return FalseTerm;
+  }
+}
+
+var TrueTerm = {
+  tag: 'TrueTerm',
+  eval: function () {
+    return this;
+  },
+  apply: function (x) {
+    return PartialFunctionTerm(function (y) {
+      return x.eval();
+    });
+  },
+  print: function () {
+    return 't';
+  }
+};
+
+var FalseTerm = {
+  tag: 'FalseTerm',
+  eval: function () {
+    return this;
+  },
+  apply: function (x) {
+    return PartialFunctionTerm(function (y) {
+      return y.eval();
+    });
+  },
+  print: function () {
+    return 'f';
+  }
+};
+
 // #1, #2, #3. Numbers and negative numbers
 function NumTerm(num) {
   if (!(this instanceof NumTerm)) {
@@ -383,21 +421,45 @@ if (typeof window === 'undefined') {
 }
 
 // #11. Equality and Booleans
-function EqTerm(arg1, arg2) {
-  return {
-    tag: 'EqTerm',
-    opName: 'eq',
-    arg1: arg1,
-    arg2: arg2,
-    eval: function () {
-      return evalBinaryCompOp(this, function (num1, num2) {
-        return num1 == num2;
+var EqTerm = {
+  tag: 'EqTerm',
+  opName: 'eq',
+  eval: function () {
+    return this;
+  },
+  apply: function (arg1) {
+    var opTerm = this;
+    return PartialFunctionTerm(function (arg2) {
+      return applyBinaryCompOp(opTerm, arg1, arg2, function (num1, num2) {
+        return num1 === num2;
       });
-    },
-    print: function () {
-      return printBinaryOp(this);
-    }
-  };
+    });
+  },
+  print: function () {
+    return printBinaryOp(this);
+  }
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(
+      ApTerm(EqTerm, NumTerm(0)),
+      NumTerm(-2),
+    ).eval(),
+    FalseTerm,
+  );
+  assert.deepEqual(
+    ApTerm(
+      ApTerm(EqTerm, NumTerm(-2)),
+      NumTerm(-2),
+    ).eval(),
+    TrueTerm,
+  );
+  assert.throws(
+    () => ApTerm(ApTerm(EqTerm, NilTerm), NumTerm(42)).eval(),
+    /Type error: ‘eq’ needs two numeric arguments/,
+  );
 }
 
 // #12. Strict Less-Than
@@ -568,29 +630,10 @@ if (typeof window === 'undefined') {
 }
 
 // #21, #22. Booleans
-function BoolTerm(bool) {
-  if (bool) {
-    return TrueTerm;
-  } else {
-    return FalseTerm;
-  }
-}
+// BoolTerm was moved to the top
 
 // #21. True (K Combinator)
-var TrueTerm = {
-  tag: 'TrueTerm',
-  eval: function () {
-    return this;
-  },
-  apply: function (x) {
-    return PartialFunctionTerm(function (y) {
-      return x.eval();
-    });
-  },
-  print: function () {
-    return 't';
-  }
-};
+// TrueTerm was moved to the top
 
 if (typeof window === 'undefined') {
   const assert = require('assert');
@@ -604,20 +647,7 @@ if (typeof window === 'undefined') {
 }
 
 // #22. False
-var FalseTerm = {
-  tag: 'FalseTerm',
-  eval: function () {
-    return this;
-  },
-  apply: function (x) {
-    return PartialFunctionTerm(function (y) {
-      return y.eval();
-    });
-  },
-  print: function () {
-    return 'f';
-  }
-};
+// FalseTerm was moved to the top
 
 if (typeof window === 'undefined') {
   const assert = require('assert');
@@ -924,6 +954,10 @@ function readTerm(tokens) {
       return Pair(MulTerm, moreTokens);
     case 'div':
       return Pair(DivTerm, moreTokens);
+    case 'eq':
+      return Pair(EqTerm, moreTokens);
+    case 'lt':
+      return Pair(LtTerm, moreTokens);
     case 't':
       return Pair(TrueTerm, moreTokens);
     case 'f':
@@ -940,10 +974,6 @@ function readTerm(tokens) {
     // TODO: clean up these symbols
     case 'mod':
       return readUnaryOp('mod', ModTerm, moreTokens);
-    case 'eq':
-      return readBinaryOp('eq', EqTerm, moreTokens);
-    case 'lt':
-      return readBinaryOp('lt', LtTerm, moreTokens);
 
     // Other, more complicated cases
     case '(':
@@ -1021,7 +1051,7 @@ if (typeof window === 'undefined') {
     readTerm(tokeniseInput('foobar')),
     Pair(IdentifierTerm('foobar'), []),
   );
-  // Nullary symbols: inc, dec, add, mul, div
+  // Nullary symbols: inc, dec, add, mul, div, eq, lt
   assert.deepEqual(
     readTerm(tokeniseInput('inc')),
     Pair(IncTerm, []),
@@ -1041,6 +1071,14 @@ if (typeof window === 'undefined') {
   assert.deepEqual(
     readTerm(tokeniseInput('div')),
     Pair(DivTerm, []),
+  );
+  assert.deepEqual(
+    readTerm(tokeniseInput('eq')),
+    Pair(EqTerm, []),
+  );
+  assert.deepEqual(
+    readTerm(tokeniseInput('lt')),
+    Pair(LtTerm, []),
   );
   // Binary: application
   assert.deepEqual(
@@ -1136,6 +1174,15 @@ function applyBinaryNumOp(opTerm, arg1, arg2, fun) {
     throw new Error('Type error: ‘' + opTerm.opName + '’ needs two numeric arguments');
   }
   return NumTerm(fun(val1.num, val2.num));
+}
+
+function applyBinaryCompOp(opTerm, arg1, arg2, fun) {
+  var val1 = arg1.eval();
+  var val2 = arg2.eval();
+  if (val1.tag != 'NumTerm' || val2.tag != 'NumTerm') {
+    throw new Error('Type error: ‘' + opTerm.opName + '’ needs two numeric arguments');
+  }
+  return BoolTerm(fun(val1.num, val2.num));
 }
 
 //////////////////////////////////////////////////////////////////////////////
