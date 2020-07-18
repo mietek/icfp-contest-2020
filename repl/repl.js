@@ -389,7 +389,51 @@ if (typeof window === 'undefined') {
 }
 
 // #18. S Combinator
-// TODO
+var STerm = {
+  tag: 'STerm',
+  eval: function () {
+    return this;
+  },
+  apply: function (x) {
+    return PartialFunctionTerm(function (y) {
+      return PartialFunctionTerm(function (z) {
+        return ApTerm(
+          ApTerm(x, z),
+          ApTerm(y, z),
+        ).eval();
+      });
+    });
+  },
+  print: function () {
+    return 's';
+  }
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(
+      ApTerm(
+        ApTerm(STerm, AddTerm),
+        IncTerm,
+      ),
+      NumTerm(1),
+    ).eval(),
+    NumTerm(3),
+  );
+  // TODO uncomment after Mul is implemented correctly
+  // assert.deepEqual(
+  //   ApTerm(
+  //     ApTerm(
+  //       ApTerm(STerm, MulTerm),
+  //       ApTerm(AddTerm, NumTerm(1)),
+  //     ),
+  //     NumTerm(1),
+  //   ).eval(),
+  //   NumTerm(42),
+  // );
+}
+
 
 // #19. C Combinator
 // TODO
