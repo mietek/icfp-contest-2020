@@ -284,39 +284,102 @@ if (typeof window === 'undefined') {
 // TODO: Let’s hope we won’t need to deal with them
 
 // #9. Product
-function MulTerm(arg1, arg2) {
-  return {
-    tag: 'MulTerm',
-    opName: 'mul',
-    arg1: arg1,
-    arg2: arg2,
-    eval: function () {
-      return evalBinaryNumOp(this, function (num1, num2) {
+var MulTerm = {
+  tag: 'MulTerm',
+  opName: 'mul',
+  eval: function () {
+    return this;
+  },
+  apply: function (arg1) {
+    var opTerm = this;
+    return PartialFunctionTerm(function (arg2) {
+      return applyBinaryNumOp(opTerm, arg1, arg2, function (num1, num2) {
         return num1 * num2;
       });
-    },
-    print: function () {
-      return printBinaryOp(this);
-    }
-  };
+    });
+  },
+  print: function () {
+    return printBinaryOp(this);
+  }
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(
+      ApTerm(MulTerm, NumTerm(4)),
+      NumTerm(2),
+    ).eval(),
+    NumTerm(8),
+  );
+  assert.throws(
+    () => ApTerm(ApTerm(MulTerm, NilTerm), NumTerm(42)).eval(),
+    /Type error: ‘mul’ needs two numeric arguments/,
+  );
 }
 
 // #10. Integer Division
-function DivTerm(arg1, arg2) {
-  return {
-    tag: 'DivTerm',
-    opName: 'div',
-    arg1: arg1,
-    arg2: arg2,
-    eval: function () {
-      return evalBinaryNumOp(this, function (num1, num2) {
+var DivTerm = {
+  tag: 'DivTerm',
+  opName: 'div',
+  eval: function () {
+    return this;
+  },
+  apply: function (arg1) {
+    var opTerm = this;
+    return PartialFunctionTerm(function (arg2) {
+      return applyBinaryNumOp(opTerm, arg1, arg2, function (num1, num2) {
         return parseInt(num1 / num2);
       });
-    },
-    print: function () {
-      return printBinaryOp(this);
-    }
-  };
+    });
+  },
+  print: function () {
+    return printBinaryOp(this);
+  }
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(ApTerm(DivTerm, NumTerm(4)), NumTerm(2)).eval(),
+    NumTerm(2),
+  );
+  assert.deepEqual(
+    ApTerm(ApTerm(DivTerm, NumTerm(4)), NumTerm(3)).eval(),
+    NumTerm(1),
+  );
+  assert.deepEqual(
+    ApTerm(ApTerm(DivTerm, NumTerm(4)), NumTerm(4)).eval(),
+    NumTerm(1),
+  );
+  assert.deepEqual(
+    ApTerm(ApTerm(DivTerm, NumTerm(4)), NumTerm(5)).eval(),
+    NumTerm(0),
+  );
+  assert.deepEqual(
+    ApTerm(ApTerm(DivTerm, NumTerm(5)), NumTerm(2)).eval(),
+    NumTerm(2),
+  );
+  assert.deepEqual(
+    ApTerm(ApTerm(DivTerm, NumTerm(6)), NumTerm(-2)).eval(),
+    NumTerm(-3),
+  );
+  assert.deepEqual(
+    ApTerm(ApTerm(DivTerm, NumTerm(5)), NumTerm(-3)).eval(),
+    NumTerm(-1),
+  );
+  assert.deepEqual(
+    ApTerm(ApTerm(DivTerm, NumTerm(-5)), NumTerm(3)).eval(),
+    NumTerm(-1),
+  );
+  assert.deepEqual(
+    ApTerm(ApTerm(DivTerm, NumTerm(-5)), NumTerm(-3)).eval(),
+    NumTerm(1),
+  );
+  assert.throws(
+    () => ApTerm(ApTerm(DivTerm, NilTerm), NumTerm(42)).eval(),
+    /Type error: ‘div’ needs two numeric arguments/,
+  );
 }
 
 // #11. Equality and Booleans
@@ -857,6 +920,10 @@ function readTerm(tokens) {
       return Pair(DecTerm, moreTokens);
     case 'add':
       return Pair(AddTerm, moreTokens);
+    case 'mul':
+      return Pair(MulTerm, moreTokens);
+    case 'div':
+      return Pair(DivTerm, moreTokens);
     case 't':
       return Pair(TrueTerm, moreTokens);
     case 'f':
@@ -873,10 +940,6 @@ function readTerm(tokens) {
     // TODO: clean up these symbols
     case 'mod':
       return readUnaryOp('mod', ModTerm, moreTokens);
-    case 'mul':
-      return readBinaryOp('mul', MulTerm, moreTokens);
-    case 'div':
-      return readBinaryOp('div', DivTerm, moreTokens);
     case 'eq':
       return readBinaryOp('eq', EqTerm, moreTokens);
     case 'lt':
@@ -958,7 +1021,7 @@ if (typeof window === 'undefined') {
     readTerm(tokeniseInput('foobar')),
     Pair(IdentifierTerm('foobar'), []),
   );
-  // Nullary symbols: inc, dec, add
+  // Nullary symbols: inc, dec, add, mul, div
   assert.deepEqual(
     readTerm(tokeniseInput('inc')),
     Pair(IncTerm, []),
@@ -970,6 +1033,14 @@ if (typeof window === 'undefined') {
   assert.deepEqual(
     readTerm(tokeniseInput('add')),
     Pair(AddTerm, []),
+  );
+  assert.deepEqual(
+    readTerm(tokeniseInput('mul')),
+    Pair(MulTerm, []),
+  );
+  assert.deepEqual(
+    readTerm(tokeniseInput('div')),
+    Pair(DivTerm, []),
   );
   // Binary: application
   assert.deepEqual(
