@@ -101,9 +101,10 @@ function handleKeyDown(env, event) {
 }
 
 function main() {
-  const env = Env();
+  const stdEnv = Env();
+  handleInput(stdEnv, 'pwr2 = ap ap s ap ap c ap eq 0 1 ap ap b ap mul 2 ap ap b pwr2 ap add -1');
   document.getElementById('input').addEventListener('keydown', function(event) {
-    handleKeyDown(env, event);
+    handleKeyDown(stdEnv, event);
   });
 }
 

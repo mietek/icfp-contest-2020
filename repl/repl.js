@@ -738,9 +738,7 @@ function readTerm(tokens) {
     case 'f':
       return Pair(FTerm, moreTokens);
 
-    // TODO: Implement pwr2
-    case 'pwr2':
-      throw new Error('‘pwr2’ is unimplemented');
+      // TODO: pwr2 is hardcoded in the stdEnv in main.js; make it better
 
     case 'i':
       return Pair(ITerm, moreTokens);
