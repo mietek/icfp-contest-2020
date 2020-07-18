@@ -178,7 +178,69 @@ function LtTerm(arg1, arg2) {
 }
 
 // #13. Modulate
-// TODO
+
+// modulateNum :: Int -> [Int]
+function modulateNum(num) {
+  const isNegative = num < 0 || Object.is(num, -0);
+  const signBits = isNegative ? [1, 0] : [0, 1];
+  const lengthTrailingBits = [0];
+  // this is true for both +0 and -0
+  if (num === 0) {
+    return signBits.concat(lengthTrailingBits);
+  }
+  const numberBits = Math.abs(num).toString(2).split('');
+  // pad numberBits with zeros, so that the length is a multiply of 4
+  const paddingBits = new Array((4 - numberBits.length % 4) % 4).fill(0);
+  const lengthBits = new Array(paddingBits.concat(numberBits).length / 4).fill(1);
+  return signBits
+    .concat(lengthBits)
+    .concat(lengthTrailingBits)
+    .concat(paddingBits)
+    .concat(numberBits);
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(modulateNum(0),   '010'.split(''));
+  assert.deepEqual(modulateNum(-0),  '100'.split(''));
+  assert.deepEqual(modulateNum(1),   '01100001'.split(''));
+  assert.deepEqual(modulateNum(-1),  '10100001'.split(''));
+  assert.deepEqual(modulateNum(2),   '01100010'.split(''));
+  assert.deepEqual(modulateNum(-2),  '10100010'.split(''));
+  assert.deepEqual(modulateNum(16),  '0111000010000'.split(''));
+  assert.deepEqual(modulateNum(-16), '1011000010000'.split(''));
+}
+
+function ModTerm(term) {
+  return {
+    tag: 'ModTerm',
+    term: term,
+    eval: function () {
+      var value = this.term.eval();
+      if (value.tag != 'NumTerm') {
+        throw new Error('Type error: ‘mod’ needs a numeric argument (TODO: ‘mod’ on lists)');
+      }
+      return ModulatedTerm(modulateNum(term.num));
+    },
+    print: function () {
+      return 'mod ' + this.term.print();
+    }
+  };
+};
+
+// Note: ModulatedTerm does not appear in inputs.
+function ModulatedTerm(bits) {
+  return {
+    tag: 'ModulatedTerm',
+    bits: bits,
+    eval: function () {
+      return this;
+    },
+    print: function () {
+      return '[ ' + this.bits.join(',') + ' ]';
+    }
+  };
+};
 
 // #14. Demodulate
 // TODO
@@ -309,6 +371,8 @@ function readTerm(tokens) {
       return readUnaryOp('inc', IncTerm, moreTokens);
     case 'dec':
       return readUnaryOp('dec', DecTerm, moreTokens);
+    case 'mod':
+      return readUnaryOp('mod', ModTerm, moreTokens);
     case 'add':
       return readBinaryOp('add', AddTerm, moreTokens);
     case 'mul':
