@@ -40,8 +40,6 @@ function Scope() {
 
 //////////////////////////////////////////////////////////////////////////////
 
-// TODO convert nullary terms to functions to avoid issues with ordering in the
-// source.
 var NilTerm = {
   tag: 'NilTerm',
   eval: function (scope) {
