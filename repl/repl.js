@@ -716,15 +716,55 @@ if (typeof window === 'undefined') {
 }
 
 // #25. Cons (or Pair)
+// Cons is the pair constructor, i.e. it creates a pair when applied using
+// `ap`. By itself, it does not take any arguments.
+// PairTerm is the result of applying cons. It takes two arguments.
+function PairTerm(fst, snd) {
+  if (!(this instanceof PairTerm)) {
+    return new PairTerm(fst, snd);
+  }
+  return Object.assign(this, {
+    tag: 'PairTerm',
+    fst: fst,
+    snd: snd,
+  });
+}
+
+PairTerm.prototype.eval = function () {
+  return this;
+};
+
+PairTerm.prototype.print = function () {
+  return 'cons ' + this.fst.print() + ' ' + this.snd.print();
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.strictEqual(PairTerm(NumTerm(37), NumTerm(42)).print(), 'cons 37 42');
+}
+
 var ConsTerm = {
   tag: 'ConsTerm',
   eval: function () {
     return this;
   },
+  apply: function (fst) {
+    return PartialFunctionTerm(function (snd) {
+      return PairTerm(fst, snd);
+    });
+  },
   print: function () {
     return 'cons';
   }
 };
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(ApTerm(ConsTerm, NumTerm(1)), NilTerm).eval(),
+    PairTerm(NumTerm(1), NilTerm),
+  );
+}
 
 // #26. Car (First)
 // TODO
@@ -846,19 +886,17 @@ if (typeof window === 'undefined') {
 
 // modulateTerm :: Term -> [Int]
 function modulateTerm(term) {
-  if (term.tag === 'NilTerm') {
+  const val = term.eval();
+  if (val.tag === 'NilTerm') {
     return [0, 0];
   }
-  if (term.tag === 'ConsTerm') {
-    return [1, 1];
+  if (val.tag === 'PairTerm') {
+    return [1, 1].concat(modulateTerm(val.fst)).concat(modulateTerm(val.snd));
   }
-  if (term.tag === 'ApTerm') {
-    return modulateTerm(term.arg1).concat(modulateTerm(term.arg2));
+  if (val.tag === 'NumTerm') {
+    return modulateNum(val.num);
   }
-  if (term.tag === 'NumTerm') {
-    return modulateNum(term.num);
-  }
-  throw new Error('modulateTerm cannot accept term of type: ' + term.tag);
+  throw new Error('modulateTerm cannot accept term of type: ' + val.tag);
 }
 if (typeof window === 'undefined') {
   const assert = require('assert');
@@ -994,6 +1032,8 @@ function readTerm(tokens) {
       return Pair(TrueTerm, moreTokens);
     case 'f':
       return Pair(FalseTerm, moreTokens);
+    case 'cons':
+      return Pair(ConsTerm, moreTokens);
     case 'draw':
       return Pair(DrawTerm, moreTokens);
 
@@ -1083,7 +1123,7 @@ if (typeof window === 'undefined') {
     readTerm(tokeniseInput('foobar')),
     Pair(IdentifierTerm('foobar'), []),
   );
-  // Nullary symbols: inc, dec, add, mul, div, eq, lt, neq
+  // Nullary symbols: inc, dec, add, mul, div, eq, lt, neq, cons
   assert.deepEqual(
     readTerm(tokeniseInput('inc')),
     Pair(IncTerm, []),
@@ -1115,6 +1155,10 @@ if (typeof window === 'undefined') {
   assert.deepEqual(
     readTerm(tokeniseInput('neg')),
     Pair(NegTerm, []),
+  );
+  assert.deepEqual(
+    readTerm(tokeniseInput('cons')),
+    Pair(ConsTerm, []),
   );
   // Binary: application
   assert.deepEqual(
