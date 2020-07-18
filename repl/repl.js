@@ -430,7 +430,7 @@ var ITerm = {
     return x.eval(scope);
   },
   print: function () {
-    return 'b';
+    return 'i';
   }
 };
 
@@ -1542,9 +1542,9 @@ assertRight('ap ap ap s t 31 33', '33');
 // assertRight('pwr2', 'pwr2');
 // assertRight('ap pwr2 0', '1');
 
-// assertRight('i', 'i');
+assertRight('i', 'i');
 assertRight('ap i 1', '1');
-// assertRight('ap i i', 'i');
+assertRight('ap i i', 'i');
 assertRight('ap i add', 'add');
 
 assertRight('cons', 'cons');
