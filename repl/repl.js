@@ -671,36 +671,36 @@ function modulateTerm(env, term) {
   throw new Error('modulateTerm cannot accept term of type: ' + val.tag);
 }
 
-function ModTerm(term) {
-  return {
-    tag: 'ModTerm',
-    term: term,
-    eval: function (env) {
-      var value = this.term.eval(env);
-      if (value.tag != 'NumTerm') {
-        throw new Error('Type error: ‘mod’ needs a numeric argument (TODO: ‘mod’ on lists)');
-      }
-      return ModulatedTerm(modulateTerm(env, term));
-    },
-    print: function () {
-      return 'mod ' + this.term.print();
-    }
-  };
+var ModTerm = {
+  tag: 'ModTerm',
+  eval: function (env) {
+    return this;
+  },
+  apply: function (env, term) {
+    return ModulatedTerm(modulateTerm(env, term));
+  },
+  print: function () {
+    return 'mod';
+  },
 };
 
 // Note: ModulatedTerm does not appear in inputs.
 function ModulatedTerm(bits) {
-  return {
+  if (!(this instanceof ModulatedTerm)) {
+    return new ModulatedTerm(bits);
+  }
+  return Object.assign(this, {
     tag: 'ModulatedTerm',
     bits: bits,
-    eval: function (env) {
-      return this;
-    },
-    print: function () {
-      return '[ ' + this.bits.join(',') + ' ]';
-    }
-  };
+  });
+}
+ModulatedTerm.prototype.eval = function (env) {
+  return this;
 };
+ModulatedTerm.prototype.print = function () {
+  return '{ ' + this.bits.join(',') + ' }';
+};
+
 
 // #36. Send ( 0 )
 // TODO
@@ -750,10 +750,8 @@ function readTerm(tokens) {
       return Pair(EqTerm, moreTokens);
     case 'lt':
       return Pair(LtTerm, moreTokens);
-
-    // TODO: Fix mod
     case 'mod':
-      return readUnaryOp('mod', ModTerm, moreTokens);
+      return Pair(ModTerm, moreTokens);
 
     // TODO: Implement dem, send
     case 'dem':
@@ -1418,10 +1416,18 @@ if (typeof window === 'undefined') {
     readTerm(tokenizeInput('cons')),
     Pair(ConsTerm, []),
   );
+  assert.deepEqual(
+    readTerm(tokenizeInput('mod')),
+    Pair(ModTerm, []),
+  );
   // Binary: application
   assert.deepEqual(
     readTerm(tokenizeInput('ap inc 37')),
     Pair(ApTerm(IncTerm, NumTerm(37)), []),
+  );
+  assert.deepEqual(
+    readTerm(tokenizeInput('ap mod 37')),
+    Pair(ApTerm(ModTerm, NumTerm(37)), []),
   );
 
   // equivalent of the test above
@@ -1562,8 +1568,9 @@ assertRight('ap ap lt -11 -11', 'f');
 assertRight('ap ap lt -11 -10', 't');
 
 // 'mod' is failing for now
-// assertRight('mod', 'mod');
-// assertRight('ap mod 0', '0');
+assertRight('mod', 'mod');
+assertRight('ap mod 0', '{ 0,1,0 }');
+assertRight('ap mod ap ap cons nil nil', '{ 1,1,0,0,0,0 }');
 
 assertRight('neg', 'neg');
 assertRight('ap neg 0', '0');
