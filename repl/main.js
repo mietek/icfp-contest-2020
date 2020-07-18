@@ -78,8 +78,11 @@ function createMultipleBitmapParagraph(className, bitmaps) {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   for (const [i, bitmap] of bitmaps.entries()) {
-    // todo change the color based on i and some fancy heuristics
-    ctx.fillStyle = '#fff';
+    // some magic numbers since it's supposed to be fun, right?
+    // this way, no matter how many layers, each should have a distinctive color
+    // and yet, it's deterministic!
+    let magicHue = (1 + i) * 193 % 360;
+    ctx.fillStyle = 'hsl(' + magicHue + ', 73%, 60%)';
     for (const point of bitmap) {
       ctx.fillRect(
         point.fst * pointSize + 1, // account for the top/left frame
@@ -143,9 +146,10 @@ function main() {
   const stdEnv = Env();
   handleInput(stdEnv, 'pwr2 = ap ap s ap ap c ap eq 0 1 ap ap b ap mul 2 ap ap b pwr2 ap add -1');
   handleInput(stdEnv, 'checkerboard = ap ap s ap ap b s ap ap c ap ap b c ap ap b ap c ap c ap ap s ap ap b s ap ap b ap b ap ap s i i lt eq ap ap s mul i nil ap ap s ap ap b s ap ap b ap b cons ap ap s ap ap b s ap ap b ap b cons ap c div ap c ap ap s ap ap b b ap ap c ap ap b b add neg ap ap b ap s mul div ap ap c ap ap b b checkerboard ap ap c add 2');
-  handleInput(stdEnv, 'cb1 = ap ap checkerboard 7 0');
-  handleInput(stdEnv, 'cb2 = ap ap checkerboard 7 1');
-  handleInput(stdEnv, 'cbs = ap ap cons cb1 ap ap cons cb2 nil');
+  handleInput(stdEnv, 'cb1 = ap ap checkerboard 9 11');
+  handleInput(stdEnv, 'cb2 = ap ap checkerboard 9 39');
+  handleInput(stdEnv, 'cb3 = ap ap checkerboard 9 4');
+  handleInput(stdEnv, 'cbs = ap ap cons cb1 ap ap cons cb2 ap ap cons cb3 nil');
   handleInput(stdEnv, 'showmethemagic = ap multipledraw cbs'); // who doesn't like easter eggs
   document.getElementById('input').addEventListener('keydown', function(event) {
     handleKeyDown(stdEnv, event);
