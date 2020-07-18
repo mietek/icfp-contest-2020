@@ -1411,3 +1411,65 @@ if (typeof window === 'undefined') {
     )
   );
 }
+
+// String-to-string tests based on documentation
+assertRight('1', '1');
+assertRight('-1', '-1');
+assertRight('0', '0');
+
+assertRight('eq', 'eq');
+assertRight('ap ap eq 0 0', 't');
+assertRight('ap ap eq 0 -1', 'f');
+assertRight('ap ap eq 0 2', 'f');
+assertRight('ap ap eq -1 1', 'f');
+assertRight('ap ap eq -1 -1', 't');
+
+assertRight('inc', 'inc');
+assertRight('ap inc 0', '1');
+assertRight('ap inc 1', '2');
+assertRight('ap inc -41', '-40');
+
+assertRight('dec', 'dec');
+assertRight('ap dec 0', '-1');
+assertRight('ap dec 1', '0');
+assertRight('ap dec -41', '-42');
+
+assertRight('add', 'add');
+assertRight('ap ap add 0 0', '0');
+assertRight('ap ap add 1 2', '3');
+assertRight('ap ap add 2 1', '3');
+assertRight('ap ap add -42 42', '0');
+// assertRight('ap ap add 0 x0', 'x0');
+
+assertRight('mul', 'mul');
+assertRight('ap ap mul 0 0', '0');
+assertRight('ap ap mul 1 2', '2');
+assertRight('ap ap mul 2 1', '2');
+assertRight('ap ap mul 3 -2', '-6');
+assertRight('ap ap mul -5 -5', '25');
+assertRight('ap ap mul -42 42', '-1764');
+
+assertRight('div', 'div');
+assertRight('ap ap div 4 2', '2');
+assertRight('ap ap div 4 3', '1');
+assertRight('ap ap div 4 4', '1');
+assertRight('ap ap div 4 5', '0');
+assertRight('ap ap div 5 2', '2');
+assertRight('ap ap div 6 -2', '-3');
+assertRight('ap ap div 5 -3', '-1');
+assertRight('ap ap div -5 3', '-1');
+assertRight('ap ap div -5 -3', '1');
+// assertRight('ap ap div 0 0', 'NaN');
+
+assertRight('lt', 'lt');
+assertRight('ap ap lt 0 -1', 'f');
+assertRight('ap ap lt 0 0', 'f');
+assertRight('ap ap lt 0 1', 't');
+assertRight('ap ap lt 0 2', 't');
+assertRight('ap ap lt 1 -1', 'f');
+assertRight('ap ap lt 1 0', 'f');
+assertRight('ap ap lt 1 1', 'f');
+assertRight('ap ap lt 1 2', 't');
+assertRight('ap ap lt -11 -12', 'f');
+assertRight('ap ap lt -11 -11', 'f');
+assertRight('ap ap lt -11 -10', 't');
