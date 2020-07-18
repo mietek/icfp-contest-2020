@@ -8,7 +8,7 @@ function handleInput(inputText) {
       throw new Error('Unexpected token: ‘' + moreTokens[0] + '’');
     }
     var term = termAndMoreTokens.fst;
-    var value = evalTerm(term);
+    var value = evalTerm(scope, term);
     if (typeof value.render !== 'undefined') {
       return Right(BitmapResult(value.render()));
     } else {
@@ -112,7 +112,7 @@ function appendDialog(outputContainer, inputText, outputResult) {
   return dialogContainer;
 }
 
-function handleKeyDown(event) {
+function handleKeyDown(scope, event) {
   var input = document.getElementById('input');
   if (event.keyCode == 13) {
     if (event.altKey || event.ctrlKey || event.shiftKey || event.metaKey) {
@@ -123,7 +123,7 @@ function handleKeyDown(event) {
       event.preventDefault();
       var inputText = input.value.trim();
       if (inputText.length) {
-        var outputResult = handleInput(inputText);
+        var outputResult = handleInput(scope, inputText);
         var outputContainer = document.getElementById('output-container');
         var dialogContainer = appendDialog(outputContainer, inputText, outputResult);
         dialogContainer.scrollIntoView({ behavior: "smooth" });
@@ -134,7 +134,10 @@ function handleKeyDown(event) {
 }
 
 function main() {
-  document.getElementById('input').addEventListener('keydown', handleKeyDown);
+  const scope = Scope();
+  document.getElementById('input').addEventListener('keydown', function(event) {
+    handleKeyDown(scope, event);
+  });
 }
 
 addEventListener('load', main);
