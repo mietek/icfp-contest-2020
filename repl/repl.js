@@ -1278,6 +1278,7 @@ if (typeof window === 'undefined') {
 
   //another equivalent of the test above
   assertRight('ap inc 37', '38');
+  assertRight('mul', 'mul');
 
   assert.throws(
     () => readTerm(tokeniseInput('ap')),
