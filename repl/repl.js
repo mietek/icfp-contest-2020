@@ -128,8 +128,7 @@ function IdentifierTerm(identifier) {
 }
 
 IdentifierTerm.prototype.eval = function (scope) {
-  // TODO: look up the identifier in the environment
-  return this;
+  return scope[this.identifier];
 };
 
 IdentifierTerm.prototype.print = function () {
@@ -141,26 +140,38 @@ if (typeof window === 'undefined') {
   assert.strictEqual(IdentifierTerm('foo').print(), 'foo');
 }
 
-function AssignmentTerm(arg1, arg2) {
+function AssignmentTerm(identifierTerm, term) {
   if (!(this instanceof AssignmentTerm)) {
-    return new AssignmentTerm(arg1, arg2);
+    return new AssignmentTerm(identifierTerm, term);
   }
   return Object.assign(this, {
     tag: 'AssignmentTerm',
     opName: 'assignment',
-    arg1: arg1,
-    arg2: arg2,
+    identifierTerm: identifierTerm,
+    term: term,
   });
 }
 
 AssignmentTerm.prototype.eval = function (scope) {
-  // TODO: modify the environment
+  scope[this.identifierTerm.identifier] = this.term;
 };
 
 AssignmentTerm.prototype.print = function () {
-  return this.identifier.print() + ' = ' + this.term.print();
+  return this.identifierTerm.print() + ' = ' + this.term.print();
 };
 
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  const scope = Scope();
+  AssignmentTerm(
+    IdentifierTerm('foo'),
+    NumTerm(42),
+  ).eval(scope);
+  assert.deepEqual(
+    IdentifierTerm('foo').eval(scope),
+    NumTerm(42),
+  );
+}
 // #5. Application (this is technically #17, but we need it to test all the
 // binary operators.
 
