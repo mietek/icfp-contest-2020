@@ -1567,7 +1567,6 @@ assertRight('ap ap lt -11 -12', 'f');
 assertRight('ap ap lt -11 -11', 'f');
 assertRight('ap ap lt -11 -10', 't');
 
-// 'mod' is failing for now
 assertRight('mod', 'mod');
 assertRight('ap mod 0', '{ 0,1,0 }');
 assertRight('ap mod ap ap cons nil nil', '{ 1,1,0,0,0,0 }');
