@@ -471,7 +471,7 @@ if (typeof window === 'undefined') {
 
 // #20. B Combinator
 var BTerm = {
-  tag: 'CTerm',
+  tag: 'BTerm',
   eval: function () {
     return this;
   },
@@ -571,7 +571,26 @@ if (typeof window === 'undefined') {
 // TODO
 
 // #24. I Combinator
-// TODO
+var ITerm = {
+  tag: 'ITerm',
+  eval: function () {
+    return this;
+  },
+  apply: function (x) {
+    return x.eval();
+  },
+  print: function () {
+    return 'b';
+  }
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(ITerm, NumTerm(1)).eval(),
+    NumTerm(1),
+  );
+}
 
 // #25. Cons (or Pair)
 var ConsTerm = {
