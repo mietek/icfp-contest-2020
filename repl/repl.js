@@ -214,8 +214,8 @@ var EqTerm = {
   }
 };
 
-var TrueTerm = {
-  tag: 'TrueTerm',
+var TTerm = {
+  tag: 'TTerm',
   eval: function (scope) {
     return this;
   },
@@ -229,8 +229,8 @@ var TrueTerm = {
   }
 };
 
-var FalseTerm = {
-  tag: 'FalseTerm',
+var FTerm = {
+  tag: 'FTerm',
   eval: function (scope) {
     return this;
   },
@@ -246,9 +246,9 @@ var FalseTerm = {
 
 function BoolTerm(bool) {
   if (bool) {
-    return TrueTerm;
+    return TTerm;
   } else {
-    return FalseTerm;
+    return FTerm;
   }
 }
 
@@ -412,10 +412,10 @@ var BTerm = {
 // BoolTerm was moved to the top
 
 // #21. True (K Combinator)
-// TrueTerm was moved to the top
+// TTerm was moved to the top
 
 // #22. False
-// FalseTerm was moved to the top
+// FTerm was moved to the top
 
 // #23. Power of Two
 // TODO
@@ -696,7 +696,6 @@ function readTerm(tokens) {
     return Pair(NumTerm(Number(headToken)), moreTokens);
   }
   switch (tokens[0]) {
-    // Unary symbols
     case 'inc':
       return Pair(IncTerm, moreTokens);
     case 'dec':
@@ -711,30 +710,56 @@ function readTerm(tokens) {
       return Pair(EqTerm, moreTokens);
     case 'lt':
       return Pair(LtTerm, moreTokens);
+
+    // TODO: Fix mod
+    case 'mod':
+      return readUnaryOp('mod', ModTerm, moreTokens);
+
+    // TODO: Implement dem, send
+
     case 'neg':
       return Pair(NegTerm, moreTokens);
+
+    // TODO: Fix ap
+    case 'ap':
+      return readBinaryOp('ap', ApTerm, moreTokens);
+
+    case 's':
+      return Pair(STerm, moreTokens);
+    case 'c':
+      return Pair(CTerm, moreTokens);
+    case 'b':
+      return Pair(BTerm, moreTokens);
     case 't':
-      return Pair(TrueTerm, moreTokens);
+      return Pair(TTerm, moreTokens);
     case 'f':
-      return Pair(FalseTerm, moreTokens);
+      return Pair(FTerm, moreTokens);
+
+    // TODO: Implement pwr
+
+    case 'i':
+      return Pair(ITerm, moreTokens);
     case 'cons':
+      return Pair(ConsTerm, moreTokens);
+
+    // TODO: Implement car, cdr
+
+    case 'nil':
+      return Pair(NilTerm, moreTokens);
+
+    // TODO: Implement isnil
+
+    // TODO: Fix lists
+    case '(':
+      return readTermInParens(moreTokens);
+
+    case 'vec':
       return Pair(ConsTerm, moreTokens);
     case 'draw':
       return Pair(DrawTerm, moreTokens);
 
-    // Binary symbols
-    case 'nil':
-      return Pair(NilTerm, moreTokens);
-    case 'ap':
-      return readBinaryOp('ap', ApTerm, moreTokens);
+    // TODO: Implement checkerboard, if0, interact...
 
-    // TODO: clean up these symbols
-    case 'mod':
-      return readUnaryOp('mod', ModTerm, moreTokens);
-
-    // Other, more complicated cases
-    case '(':
-      return readTermInParens(moreTokens);
     default:
       return returnIdentifierOrReadAssignment(IdentifierTerm(headToken), moreTokens);
       // return Pair(IdentifierTerm(headToken), moreTokens);
@@ -743,6 +768,7 @@ function readTerm(tokens) {
 }
 
 // readUnaryOp : String -> (Term -> Term) -> Array String -> Pair Term (Array String)
+// TODO: Delete this
 function readUnaryOp(opName, opConstructor, tokens) {
   if (tokens.length < 1) {
     throw new Error('Syntax error: ‘' + opName + '’ needs one argument');
@@ -752,6 +778,7 @@ function readUnaryOp(opName, opConstructor, tokens) {
 }
 
 // readBinaryOp : String -> (Term -> Term -> Term) -> Array String -> Pair Term (Array String)
+// TODO: Delete this
 function readBinaryOp(opName, opConstructor, tokens) {
   if (tokens.length < 2) {
     throw new Error('Syntax error: ‘' + opName + '’ needs two arguments');
@@ -1023,14 +1050,14 @@ if (typeof window === 'undefined') {
       ApTerm(EqTerm, NumTerm(0)),
       NumTerm(-2),
     ).eval(Scope()),
-    FalseTerm,
+    FTerm,
   );
   assert.deepEqual(
     ApTerm(
       ApTerm(EqTerm, NumTerm(-2)),
       NumTerm(-2),
     ).eval(Scope()),
-    TrueTerm,
+    TTerm,
   );
   assert.throws(
     () => ApTerm(ApTerm(EqTerm, NilTerm), NumTerm(42)).eval(Scope()),
@@ -1042,15 +1069,15 @@ if (typeof window === 'undefined') {
   const assert = require('assert');
   assert.deepEqual(
     ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(-2)).eval(),
-    FalseTerm,
+    FTerm,
   );
   assert.deepEqual(
     ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(0)).eval(),
-    FalseTerm,
+    FTerm,
   );
   assert.deepEqual(
     ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(2)).eval(),
-    TrueTerm,
+    TTerm,
   );
   assert.throws(
     () => ApTerm(ApTerm(LtTerm, NilTerm), NumTerm(42)).eval(),
@@ -1150,7 +1177,7 @@ if (typeof window === 'undefined') {
   const assert = require('assert');
   assert.deepEqual(
     ApTerm(
-      ApTerm(TrueTerm, NumTerm(1)),
+      ApTerm(TTerm, NumTerm(1)),
       NumTerm(5),
     ).eval(Scope()),
     NumTerm(1),
@@ -1161,7 +1188,7 @@ if (typeof window === 'undefined') {
   const assert = require('assert');
   assert.deepEqual(
     ApTerm(
-      ApTerm(FalseTerm, NumTerm(1)),
+      ApTerm(FTerm, NumTerm(1)),
       NumTerm(5),
     ).eval(Scope()),
     NumTerm(5),
