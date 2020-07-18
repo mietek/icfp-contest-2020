@@ -742,9 +742,9 @@ function readTerm(tokens) {
     case 'f':
       return Pair(FTerm, moreTokens);
 
-    // TODO: Implement pwr
-    case 'pwr':
-      throw new Error('‘pwr’ is unimplemented');
+    // TODO: Implement pwr2
+    case 'pwr2':
+      throw new Error('‘pwr2’ is unimplemented');
 
     case 'i':
       return Pair(ITerm, moreTokens);
