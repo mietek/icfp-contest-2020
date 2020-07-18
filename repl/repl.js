@@ -50,6 +50,23 @@ function NumTerm(num) {
 // #4. Equality
 // TODO: Actually, it’s symbol binding, and so, needs environments and dynamic/lexical scoping
 
+// #5. Application
+// TODO: Add parsing of ApTerm, add eval
+function ApTerm(arg1, arg2) {
+  return {
+    tag: 'ApTerm',
+    opName: 'ap',
+    arg1: arg1,
+    arg2: arg2,
+    eval: function () {
+      return this;
+    },
+    print: function () {
+      return printBinaryOp(this);
+    }
+  };
+}
+
 // #5. Successor
 function IncTerm(arg1) {
   return {
@@ -301,7 +318,15 @@ var FalseTerm = {
 // TODO
 
 // #25. Cons (or Pair)
-// TODO
+var ConsTerm = {
+  tag: 'ConsTerm',
+  eval: function () {
+    return this;
+  },
+  print: function () {
+    return 'cons';
+  }
+};
 
 // #26. Car (First)
 // TODO
@@ -310,7 +335,15 @@ var FalseTerm = {
 // TODO
 
 // #28. Nil (Empty List)
-// TODO
+var NilTerm = {
+  tag: 'NilTerm',
+  eval: function () {
+    return this;
+  },
+  print: function () {
+    return 'nil';
+  }
+};
 
 // #29. Is Nil (Is Empty List)
 // TODO
