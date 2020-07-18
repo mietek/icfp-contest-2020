@@ -338,12 +338,16 @@ ApTerm.prototype.eval = function (env) {
   var value1 = this.arg1.eval(env);
   if (value1.apply) {
     return value1.apply(env, this.arg2);
-  } else {
-    throw new Error(
-      'Cannot perform application on term: ‘' + value1.tag +
-      '’. Did you forget to implement `apply`?'
-    );
   }
+  return this;
+  // TODO: Let’s try evaluating open terms to themselves, instead of failing
+  //  else {
+  //   console.log(this.arg1, value1);
+  //   throw new Error(
+  //     'Cannot perform application on term: ‘' + value1.tag +
+  //     '’. Did you forget to implement `apply`?'
+  //   );
+  // }
 };
 ApTerm.prototype.print = function () {
   return 'ap ' + this.arg1.print() + ' ' + this.arg2.print();
