@@ -836,7 +836,7 @@ function returnSymOrReadAssignment(symTerm, tokens) {
     var result = readTerm(moreTokens);
     return Pair(AssignmentTerm(symTerm, result.fst), result.snd);
   }
-  throw new Error('no terms on the right side of =');
+  return Pair(symTerm, tokens);
 }
 
 //////////////////////////////////////////////////////////////////////////////
