@@ -359,7 +359,7 @@ var STerm = {
     return PartialFunctionTerm(function (y) {
       return PartialFunctionTerm(function (z) {
         return ApTerm(
-          ApTerm(x, z),
+          ApTerm(x, z), // TODO: May need to pre-evaluate z first for performance, or not
           ApTerm(y, z),
         ).eval(env);
       });
