@@ -1500,3 +1500,53 @@ assertRight('ap ap lt 1 2', 't');
 assertRight('ap ap lt -11 -12', 'f');
 assertRight('ap ap lt -11 -11', 'f');
 assertRight('ap ap lt -11 -10', 't');
+
+// 'mod' is failing for now
+// assertRight('mod', 'mod');
+// assertRight('ap mod 0', '0');
+
+assertRight('neg', 'neg');
+assertRight('ap neg 0', '0');
+assertRight('ap neg 1', '-1');
+assertRight('ap neg -2', '2');
+assertRight('ap neg -0', '0');
+
+// assertRight('ap', 'ap');
+assertRight('ap inc ap inc 0', '2');
+assertRight('ap inc ap inc ap inc -3', '0');
+assertRight('ap ap add ap ap add 2 3 4', '9');
+assertRight('ap ap add 2 ap ap add 3 4', '9');
+assertRight('ap ap add ap ap mul 2 3 4', '10');
+assertRight('ap ap mul 2 ap ap add 3 4', '14');
+
+assertRight('s', 's');
+assertRight('ap ap ap s add inc 1', '3');
+assertRight('ap ap ap s mul ap add 1 6', '42');
+
+assertRight('c', 'c');
+assertRight('ap ap ap c add 1 2', '3');
+
+assertRight('b', 'b');
+assertRight('ap ap ap b inc dec 1337', '1337');
+
+assertRight('t', 't');
+assertRight('ap ap t 1 5', '1');
+assertRight('ap ap t t i', 't');
+assertRight('ap ap t t ap inc 5', 't');
+assertRight('ap ap t ap inc 5 t', '6');
+
+assertRight('f', 'f');
+assertRight('ap ap f 1 5', '5');
+assertRight('ap ap ap s t 31 33', '33');
+
+// assertRight('pwr2', 'pwr2');
+// assertRight('ap pwr2 0', '1');
+
+// assertRight('i', 'i');
+assertRight('ap i 1', '1');
+// assertRight('ap i i', 'i');
+assertRight('ap i add', 'add');
+
+assertRight('cons', 'cons');
+assertRight('ap ap cons 1 2', 'cons 1 2');
+// assertRight('ap ap ap cons 1 2 3', 'cons 1 2 3');
