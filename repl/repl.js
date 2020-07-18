@@ -142,10 +142,40 @@ function DivTerm(arg1, arg2) {
 }
 
 // #11. Equality and Booleans
-// TODO
+function EqTerm(arg1, arg2) {
+  return {
+    tag: 'EqTerm',
+    opName: 'eq',
+    arg1: arg1,
+    arg2: arg2,
+    eval: function () {
+      return evalBinaryCompOp(this, function (num1, num2) {
+        return num1 == num2;
+      });
+    },
+    print: function () {
+      return printBinaryOp(this);
+    }
+  };
+}
 
 // #12. Strict Less-Than
-// TODO
+function LtTerm(arg1, arg2) {
+  return {
+    tag: 'LtTerm',
+    opName: 'lt',
+    arg1: arg1,
+    arg2: arg2,
+    eval: function () {
+      return evalBinaryCompOp(this, function (num1, num2) {
+        return num1 < num2;
+      });
+    },
+    print: function () {
+      return printBinaryOp(this);
+    }
+  };
+}
 
 // #13. Modulate
 // TODO
@@ -171,11 +201,36 @@ function DivTerm(arg1, arg2) {
 // #20. B Combinator
 // TODO
 
+// #21, #22. Booleans
+function BoolTerm(bool) {
+  if (bool) {
+    return TrueTerm;
+  } else {
+    return FalseTerm;
+  }
+}
+
 // #21. True (K Combinator)
-// TODO
+var TrueTerm = {
+  tag: 'TrueTerm',
+  eval: function () {
+    return this;
+  },
+  print: function () {
+    return 't';
+  }
+};
 
 // #22. False
-// TODO
+var FalseTerm = {
+  tag: 'FalseTerm',
+  eval: function () {
+    return this;
+  },
+  print: function () {
+    return 'f';
+  }
+};
 
 // #23. Power of Two
 // TODO
@@ -260,6 +315,14 @@ function readTerm(tokens) {
       return readBinaryOp('mul', MulTerm, moreTokens);
     case 'div':
       return readBinaryOp('div', DivTerm, moreTokens);
+    case 'eq':
+      return readBinaryOp('eq', EqTerm, moreTokens);
+    case 'lt':
+      return readBinaryOp('lt', LtTerm, moreTokens);
+    case 't':
+      return Pair(TrueTerm, moreTokens);
+    case 'f':
+      return Pair(FalseTerm, moreTokens);
     case '(':
       return readTermInParens(moreTokens);
     default:
@@ -310,21 +373,30 @@ function evalTerm(term) {
   return term.eval();
 }
 
-function evalUnaryNumOp(op, unaryFun) {
+function evalUnaryNumOp(op, fun) {
   var val1 = op.arg1.eval();
   if (val1.tag != 'NumTerm') {
     throw new Error('Type error: ‘' + op.opName + '’ needs one numeric argument');
   }
-  return NumTerm(unaryFun(val1.num));
+  return NumTerm(fun(val1.num));
 }
 
-function evalBinaryNumOp(op, binaryFun) {
+function evalBinaryNumOp(op, fun) {
   var val1 = op.arg1.eval();
   var val2 = op.arg2.eval();
   if (val1.tag != 'NumTerm' || val2.tag != 'NumTerm') {
     throw new Error('Type error: ‘' + op.opName + '’ needs two numeric arguments');
   }
-  return NumTerm(binaryFun(val1.num, val2.num));
+  return NumTerm(fun(val1.num, val2.num));
+}
+
+function evalBinaryCompOp(op, fun) {
+  var val1 = op.arg1.eval();
+  var val2 = op.arg2.eval();
+  if (val1.tag != 'NumTerm' || val2.tag != 'NumTerm') {
+    throw new Error('Type error: ‘' + op.opName + '’ needs two numeric arguments');
+  }
+  return BoolTerm(fun(val1.num, val2.num));
 }
 
 //////////////////////////////////////////////////////////////////////////////
