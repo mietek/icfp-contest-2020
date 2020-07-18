@@ -31,6 +31,8 @@ function Right(right) {
   };
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 // #1, #2, #3. Numbers and negative numbers
 function NumTerm(num) {
   return {
@@ -49,57 +51,53 @@ function NumTerm(num) {
 // TODO: Actually, it’s symbol binding, and so, needs environments and dynamic/lexical scoping
 
 // #5. Successor
-function IncTerm(term) {
+function IncTerm(arg1) {
   return {
     tag: 'IncTerm',
-    term: term,
+    opName: 'inc',
+    arg1: arg1,
     eval: function () {
-      var value = this.term.eval();
-      if (value.tag != 'NumTerm') {
-        throw new Error('Type error: ‘inc’ needs a numeric argument');
-      }
-      return NumTerm(value.num + 1);
+      return evalUnaryNumOp(this, function (num1) {
+        return num1 + 1;
+      });
     },
     print: function () {
-      return 'inc ' + this.term.print();
+      return printUnaryOp(this);
     }
   };
 }
 
 // #6. Predecessor
-function DecTerm(term) {
+function DecTerm(arg1) {
   return {
     tag: 'DecTerm',
-    term: term,
+    opName: 'dec',
+    arg1: arg1,
     eval: function () {
-      var value = this.term.eval();
-      if (value.tag != 'NumTerm') {
-        throw new Error('Type error: ‘dec’ needs a numeric argument');
-      }
-      return NumTerm(value.num - 1);
+      return evalUnaryNumOp(this, function (num1) {
+        return num1 - 1;
+      });
     },
     print: function () {
-      return 'dec ' + this.term.print();
+      return printUnaryOp(this);
     }
   };
 }
 
 // #7. Sum
-function AddTerm(term1, term2) {
+function AddTerm(arg1, arg2) {
   return {
     tag: 'AddTerm',
-    term1: term1,
-    term2: term2,
+    opName: 'add',
+    arg1: arg1,
+    arg2: arg2,
     eval: function () {
-      var value1 = this.term1.eval();
-      var value2 = this.term2.eval();
-      if (value1.tag != 'NumTerm' || value2.tag != 'NumTerm') {
-        throw new Error('Type error: ‘add’ needs two numeric arguments');
-      }
-      return NumTerm(value1.num + value2.num);
+      return evalBinaryNumOp(this, function (num1, num2) {
+        return num1 + num2;
+      });
     },
     print: function () {
-      return 'add ' + this.term1.print() + ' ' + this.term2.print();
+      return printBinaryOp(this);
     }
   };
 }
@@ -108,41 +106,37 @@ function AddTerm(term1, term2) {
 // TODO: Let’s hope we won’t need to deal with them
 
 // #9. Product
-function MulTerm(term1, term2) {
+function MulTerm(arg1, arg2) {
   return {
     tag: 'MulTerm',
-    term1: term1,
-    term2: term2,
+    opName: 'mul',
+    arg1: arg1,
+    arg2: arg2,
     eval: function () {
-      var value1 = this.term1.eval();
-      var value2 = this.term2.eval();
-      if (value1.tag != 'NumTerm' || value2.tag != 'NumTerm') {
-        throw new Error('Type error: ‘mul’ needs two numeric arguments');
-      }
-      return NumTerm(value1.num * value2.num);
+      return evalBinaryNumOp(this, function (num1, num2) {
+        return num1 * num2;
+      });
     },
     print: function () {
-      return 'mul ' + this.term1.print() + ' ' + this.term2.print();
+      return printBinaryOp(this);
     }
   };
 }
 
 // #10. Integer Division
-function DivTerm(term1, term2) {
+function DivTerm(arg1, arg2) {
   return {
     tag: 'DivTerm',
-    term1: term1,
-    term2: term2,
+    opName: 'div',
+    arg1: arg1,
+    arg2: arg2,
     eval: function () {
-      var value1 = this.term1.eval();
-      var value2 = this.term2.eval();
-      if (value1.tag != 'NumTerm' || value2.tag != 'NumTerm') {
-        throw new Error('Type error: ‘div’ needs two numeric arguments');
-      }
-      return NumTerm(parseInt(value1.num / value2.num));
+      return evalBinaryNumOp(this, function (num1, num2) {
+        return parseInt(num1 / num2);
+      });
     },
     print: function () {
-      return 'div ' + this.term1.print() + ' ' + this.term2.print();
+      return printBinaryOp(this);
     }
   };
 }
@@ -243,6 +237,8 @@ function DivTerm(term1, term2) {
 // #42. Galaxy
 // TODO
 
+//////////////////////////////////////////////////////////////////////////////
+
 // readTerm : Array String -> Pair Term (Array String)
 function readTerm(tokens) {
   if (tokens.length == 0) {
@@ -307,12 +303,41 @@ function readTermInParens(tokens) {
   return Pair(term, moreTokens.slice(1));
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
 // evalTerm : Term -> Term
 function evalTerm(term) {
   return term.eval();
 }
 
+function evalUnaryNumOp(op, unaryFun) {
+  var val1 = op.arg1.eval();
+  if (val1.tag != 'NumTerm') {
+    throw new Error('Type error: ‘' + op.opName + '’ needs one numeric argument');
+  }
+  return NumTerm(unaryFun(val1.num));
+}
+
+function evalBinaryNumOp(op, binaryFun) {
+  var val1 = op.arg1.eval();
+  var val2 = op.arg2.eval();
+  if (val1.tag != 'NumTerm' || val2.tag != 'NumTerm') {
+    throw new Error('Type error: ‘' + op.opName + '’ needs two numeric arguments');
+  }
+  return NumTerm(binaryFun(val1.num, val2.num));
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 // printTerm : Term -> String
 function printTerm(term) {
   return term.print();
+}
+
+function printUnaryOp(op) {
+  return op.opName + ' ' + op.arg1.print();
+}
+
+function printBinaryOp(op) {
+  return op.opName + ' ' + op.arg1.print() + ' ' + op.arg2.print();
 }
