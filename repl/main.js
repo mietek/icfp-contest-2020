@@ -79,7 +79,7 @@ function appendDialog(outputContainer, inputText, outputResult) {
   return dialogContainer;
 }
 
-function handleKeyDown(scope, event) {
+function handleKeyDown(env, event) {
   var input = document.getElementById('input');
   if (event.keyCode == 13) {
     if (event.altKey || event.ctrlKey || event.shiftKey || event.metaKey) {
@@ -90,7 +90,7 @@ function handleKeyDown(scope, event) {
       event.preventDefault();
       var inputText = input.value.trim();
       if (inputText.length) {
-        var outputResult = handleInput(scope, inputText);
+        var outputResult = handleInput(env, inputText);
         var outputContainer = document.getElementById('output-container');
         var dialogContainer = appendDialog(outputContainer, inputText, outputResult);
         dialogContainer.scrollIntoView({ behavior: "smooth" });
@@ -101,9 +101,9 @@ function handleKeyDown(scope, event) {
 }
 
 function main() {
-  const scope = Scope();
+  const env = Env();
   document.getElementById('input').addEventListener('keydown', function(event) {
-    handleKeyDown(scope, event);
+    handleKeyDown(env, event);
   });
 }
 

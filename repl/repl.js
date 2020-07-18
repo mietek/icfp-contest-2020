@@ -35,9 +35,9 @@ function Right(right) {
   };
 }
 
-function Scope() {
+function Env() {
   return {
-    tag: 'Scope',
+    tag: 'Env',
     bindings: {},
   };
 }
@@ -54,7 +54,7 @@ function NumTerm(num) {
     num: num,
   });
 }
-NumTerm.prototype.eval = function (scope) {
+NumTerm.prototype.eval = function (env) {
   return this;
 };
 NumTerm.prototype.print = function () {
@@ -62,7 +62,7 @@ NumTerm.prototype.print = function () {
 };
 
 // #4. Equality
-// TODO: Actually, “equality” is symbol binding, and so, needs symbols and scopes
+// TODO: Actually, “equality” is symbol binding, and so, needs symbols and envs
 
 function SymTerm(sym) {
   if (!(this instanceof SymTerm)) {
@@ -73,9 +73,9 @@ function SymTerm(sym) {
     sym: sym,
   });
 }
-SymTerm.prototype.eval = function (scope) {
+SymTerm.prototype.eval = function (env) {
   // TODO: Throw an “unbound symbol” exception here
-  return scope[this.sym];
+  return env[this.sym];
 };
 SymTerm.prototype.print = function () {
   return this.sym;
@@ -94,9 +94,9 @@ function AssignmentTerm(symTerm, term) {
     term: term,
   });
 }
-AssignmentTerm.prototype.eval = function (scope) {
+AssignmentTerm.prototype.eval = function (env) {
   // TODO: Maybe disallow multiple assignment here
-  scope[this.symTerm.sym] = this.term;
+  env[this.symTerm.sym] = this.term;
   return this;
 };
 AssignmentTerm.prototype.print = function () {
@@ -106,11 +106,11 @@ AssignmentTerm.prototype.print = function () {
 // #5. Successor
 var IncTerm = {
   tag: 'IncTerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
-  apply: function (scope, arg) {
-    return applyUnaryNumOp(scope, this.tag, arg, function (num) {
+  apply: function (env, arg) {
+    return applyUnaryNumOp(env, this.tag, arg, function (num) {
       return num + 1;
     });
   },
@@ -122,11 +122,11 @@ var IncTerm = {
 // #6. Predecessor
 var DecTerm = {
   tag: 'DecTerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
-  apply: function (scope, arg) {
-    return applyUnaryNumOp(scope, this.tag, arg, function (num) {
+  apply: function (env, arg) {
+    return applyUnaryNumOp(env, this.tag, arg, function (num) {
       return num - 1;
     });
   },
@@ -138,13 +138,13 @@ var DecTerm = {
 // #7. Sum
 var AddTerm = {
   tag: 'AddTerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
-  apply: function (scope, arg1) {
+  apply: function (env, arg1) {
     var tag = this.tag;
     return PartialFunctionTerm(function (arg2) {
-      return applyBinaryNumOp(scope, tag, arg1, arg2, function (num1, num2) {
+      return applyBinaryNumOp(env, tag, arg1, arg2, function (num1, num2) {
         return num1 + num2;
       });
     });
@@ -160,13 +160,13 @@ var AddTerm = {
 // #9. Product
 var MulTerm = {
   tag: 'MulTerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
-  apply: function (scope, arg1) {
+  apply: function (env, arg1) {
     var tag = this.tag;
     return PartialFunctionTerm(function (arg2) {
-      return applyBinaryNumOp(scope, tag, arg1, arg2, function (num1, num2) {
+      return applyBinaryNumOp(env, tag, arg1, arg2, function (num1, num2) {
         return num1 * num2;
       });
     });
@@ -179,13 +179,13 @@ var MulTerm = {
 // #10. Integer Division
 var DivTerm = {
   tag: 'DivTerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
-  apply: function (scope, arg1) {
+  apply: function (env, arg1) {
     var tag = this.tag;
     return PartialFunctionTerm(function (arg2) {
-      return applyBinaryNumOp(scope, tag, arg1, arg2, function (num1, num2) {
+      return applyBinaryNumOp(env, tag, arg1, arg2, function (num1, num2) {
         if (num2 === 0) {
           return 0;
         }
@@ -201,13 +201,13 @@ var DivTerm = {
 // #11. Equality and Booleans
 var EqTerm = {
   tag: 'EqTerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
-  apply: function (scope, arg1) {
+  apply: function (env, arg1) {
     var tag = this.tag;
     return PartialFunctionTerm(function (arg2) {
-      return applyBinaryCompOp(scope, tag, arg1, arg2, function (num1, num2) {
+      return applyBinaryCompOp(env, tag, arg1, arg2, function (num1, num2) {
         return num1 === num2;
       });
     });
@@ -219,12 +219,12 @@ var EqTerm = {
 
 var TTerm = {
   tag: 'TTerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
-  apply: function (scope, x) {
+  apply: function (env, x) {
     return PartialFunctionTerm(function (y) {
-      return x.eval(scope);
+      return x.eval(env);
     });
   },
   print: function () {
@@ -234,12 +234,12 @@ var TTerm = {
 
 var FTerm = {
   tag: 'FTerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
-  apply: function (scope, x) {
+  apply: function (env, x) {
     return PartialFunctionTerm(function (y) {
-      return y.eval(scope);
+      return y.eval(env);
     });
   },
   print: function () {
@@ -261,10 +261,10 @@ var LtTerm = {
   eval: function () {
     return this;
   },
-  apply: function (scope, arg1) {
+  apply: function (env, arg1) {
     var tag = this.tag;
     return PartialFunctionTerm(function (arg2) {
-      return applyBinaryCompOp(scope, tag, arg1, arg2, function (num1, num2) {
+      return applyBinaryCompOp(env, tag, arg1, arg2, function (num1, num2) {
         return num1 < num2;
       });
     });
@@ -285,11 +285,11 @@ var LtTerm = {
 // #16. Negate
 var NegTerm = {
   tag: 'NegTerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
-  apply: function (scope, arg) {
-    return applyUnaryNumOp(scope, this.tag, arg, function (num) {
+  apply: function (env, arg) {
+    return applyUnaryNumOp(env, this.tag, arg, function (num) {
       return -num;
     });
   },
@@ -311,10 +311,10 @@ function PartialFunctionTerm(fn) {
     fn: fn
   });
 }
-PartialFunctionTerm.prototype.eval = function (scope) {
+PartialFunctionTerm.prototype.eval = function (env) {
   return this;
 };
-PartialFunctionTerm.prototype.apply = function (scope, arg) {
+PartialFunctionTerm.prototype.apply = function (env, arg) {
   return this.fn(arg);
 };
 PartialFunctionTerm.prototype.print = function (arg) {
@@ -331,12 +331,12 @@ function ApTerm(arg1, arg2) {
     arg2: arg2,
   });
 }
-ApTerm.prototype.eval = function (scope) {
+ApTerm.prototype.eval = function (env) {
   // Evaluate the first argument and see if it is a function, i.e. whether it
   // implements the (internal) `apply` method.
-  var value1 = this.arg1.eval(scope);
+  var value1 = this.arg1.eval(env);
   if (value1.apply) {
-    return value1.apply(scope, this.arg2);
+    return value1.apply(env, this.arg2);
   } else {
     throw new Error(
       'Cannot perform application on term: ‘' + this.arg1.tag +
@@ -351,16 +351,16 @@ ApTerm.prototype.print = function () {
 // #18. S Combinator
 var STerm = {
   tag: 'STerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
-  apply: function (scope, x) {
+  apply: function (env, x) {
     return PartialFunctionTerm(function (y) {
       return PartialFunctionTerm(function (z) {
         return ApTerm(
           ApTerm(x, z),
           ApTerm(y, z),
-        ).eval(scope);
+        ).eval(env);
       });
     });
   },
@@ -372,16 +372,16 @@ var STerm = {
 // #19. C Combinator
 var CTerm = {
   tag: 'CTerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
-  apply: function (scope, x) {
+  apply: function (env, x) {
     return PartialFunctionTerm(function (y) {
       return PartialFunctionTerm(function (z) {
         return ApTerm(
           ApTerm(x, z),
           y,
-        ).eval(scope);
+        ).eval(env);
       });
     });
   },
@@ -393,16 +393,16 @@ var CTerm = {
 // #20. B Combinator
 var BTerm = {
   tag: 'BTerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
-  apply: function (scope, x) {
+  apply: function (env, x) {
     return PartialFunctionTerm(function (y) {
       return PartialFunctionTerm(function (z) {
         return ApTerm(
           x,
           ApTerm(y, z),
-        ).eval(scope);
+        ).eval(env);
       });
     });
   },
@@ -426,11 +426,11 @@ var BTerm = {
 // #24. I Combinator
 var ITerm = {
   tag: 'ITerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
-  apply: function (scope, x) {
-    return x.eval(scope);
+  apply: function (env, x) {
+    return x.eval(env);
   },
   print: function () {
     return 'i';
@@ -443,10 +443,10 @@ var ITerm = {
 // PairTerm is the result of applying cons. It takes two arguments.
 var ConsTerm = {
   tag: 'ConsTerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
-  apply: function (scope, fst) {
+  apply: function (env, fst) {
     return PartialFunctionTerm(function (snd) {
       return PairTerm(fst, snd);
     });
@@ -466,7 +466,7 @@ function PairTerm(fst, snd) {
     snd: snd,
   });
 }
-PairTerm.prototype.eval = function (scope) {
+PairTerm.prototype.eval = function (env) {
   return this;
 };
 PairTerm.prototype.print = function () {
@@ -483,7 +483,7 @@ PairTerm.prototype.print = function () {
 
 var NilTerm = {
   tag: 'NilTerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
   print: function () {
@@ -503,27 +503,27 @@ var NilTerm = {
 // #32. Draw
 var DrawTerm = {
   tag: 'DrawTerm',
-  eval: function (scope) {
+  eval: function (env) {
     return this;
   },
-  apply: function (scope, arg) {
+  apply: function (env, arg) {
     const bitmap = [];
     var walk = (arg) => {
-      const list = arg.eval(scope);
+      const list = arg.eval(env);
       if (list.tag === 'NilTerm') {
         return;
       }
       if (list.tag !== 'PairTerm') {
         throw new Error('Type error: ‘draw’ expects a list');
       }
-      const head = list.fst.eval(scope);
+      const head = list.fst.eval(env);
       if (head.tag !== 'PairTerm') {
         throw new Error(
           'Type error: ‘draw’ expects list elements to be pairs, got ' + head.tag
         );
       }
-      const xTerm = head.fst.eval(scope);
-      const yTerm = head.snd.eval(scope);
+      const xTerm = head.fst.eval(env);
+      const yTerm = head.snd.eval(env);
       if (xTerm.tag !== 'NumTerm' || yTerm.tag !== 'NumTerm') {
         throw new Error('Type error: ‘draw’ expects list elements to be pairs of numbers');
       }
@@ -558,7 +558,7 @@ function ImageTerm(bitmap) {
     bitmap: bitmap,
   });
 }
-ImageTerm.prototype.eval = function (scope) {
+ImageTerm.prototype.eval = function (env) {
   return this;
 };
 ImageTerm.prototype.print = function () {
@@ -614,14 +614,14 @@ function modulateNum(num) {
     .concat(numberBits);
 };
 
-// modulateTerm :: Scope -> Term -> [Int]
-function modulateTerm(scope, term) {
-  const val = term.eval(scope);
+// modulateTerm :: Env -> Term -> [Int]
+function modulateTerm(env, term) {
+  const val = term.eval(env);
   if (val.tag === 'NilTerm') {
     return [0, 0];
   }
   if (val.tag === 'PairTerm') {
-    return [1, 1].concat(modulateTerm(scope, val.fst)).concat(modulateTerm(scope, val.snd));
+    return [1, 1].concat(modulateTerm(env, val.fst)).concat(modulateTerm(env, val.snd));
   }
   if (val.tag === 'NumTerm') {
     return modulateNum(val.num);
@@ -633,12 +633,12 @@ function ModTerm(term) {
   return {
     tag: 'ModTerm',
     term: term,
-    eval: function (scope) {
-      var value = this.term.eval(scope);
+    eval: function (env) {
+      var value = this.term.eval(env);
       if (value.tag != 'NumTerm') {
         throw new Error('Type error: ‘mod’ needs a numeric argument (TODO: ‘mod’ on lists)');
       }
-      return ModulatedTerm(modulateTerm(scope, term));
+      return ModulatedTerm(modulateTerm(env, term));
     },
     print: function () {
       return 'mod ' + this.term.print();
@@ -651,7 +651,7 @@ function ModulatedTerm(bits) {
   return {
     tag: 'ModulatedTerm',
     bits: bits,
-    eval: function (scope) {
+    eval: function (env) {
       return this;
     },
     print: function () {
@@ -842,30 +842,30 @@ function returnSymOrReadAssignment(symTerm, tokens) {
 //////////////////////////////////////////////////////////////////////////////
 
 // evalTerm : Term -> Term
-function evalTerm(scope, term) {
-  return term.eval(scope);
+function evalTerm(env, term) {
+  return term.eval(env);
 }
 
-function applyUnaryNumOp(scope, tag, arg, fun) {
-  var val = arg.eval(scope);
+function applyUnaryNumOp(env, tag, arg, fun) {
+  var val = arg.eval(env);
   if (val.tag != 'NumTerm') {
     throw new Error('Type error: ‘' + tag + '’ needs one numeric argument');
   }
   return NumTerm(fun(val.num));
 }
 
-function applyBinaryNumOp(scope, tag, arg1, arg2, fun) {
-  var val1 = arg1.eval(scope);
-  var val2 = arg2.eval(scope);
+function applyBinaryNumOp(env, tag, arg1, arg2, fun) {
+  var val1 = arg1.eval(env);
+  var val2 = arg2.eval(env);
   if (val1.tag != 'NumTerm' || val2.tag != 'NumTerm') {
     throw new Error('Type error: ‘' + tag + '’ needs two numeric arguments');
   }
   return NumTerm(fun(val1.num, val2.num));
 }
 
-function applyBinaryCompOp(scope, tag, arg1, arg2, fun) {
-  var val1 = arg1.eval(scope);
-  var val2 = arg2.eval(scope);
+function applyBinaryCompOp(env, tag, arg1, arg2, fun) {
+  var val1 = arg1.eval(env);
+  var val2 = arg2.eval(env);
   if (val1.tag != 'NumTerm' || val2.tag != 'NumTerm') {
     throw new Error('Type error: ‘' + tag + '’ needs two numeric arguments');
   }
@@ -900,8 +900,8 @@ function BitmapResult(bitmap) {
   };
 }
 
-// handleInput : Scope -> String -> Either String String
-function handleInput(scope, inputText) {
+// handleInput : Env -> String -> Either String String
+function handleInput(env, inputText) {
   try {
     var tokens = tokenizeInput(inputText);
     var termAndMoreTokens = readTerm(tokens);
@@ -910,7 +910,7 @@ function handleInput(scope, inputText) {
       throw new Error('Unexpected token: ‘' + moreTokens[0] + '’');
     }
     var term = termAndMoreTokens.fst;
-    var value = evalTerm(scope, term);
+    var value = evalTerm(env, term);
     if (typeof value.render !== 'undefined') {
       return Right(BitmapResult(value.render()));
     } else {
@@ -927,7 +927,7 @@ function assertRight(string, expectedRight) {
   if (typeof window === 'undefined') {
     const assert = require('assert');
     assert.deepEqual(
-      handleInput(Scope(), string),
+      handleInput(Env(), string),
       Right(StringResult(expectedRight))
     );
   }
@@ -947,13 +947,13 @@ if (typeof window === 'undefined') {
 
 if (typeof window === 'undefined') {
   const assert = require('assert');
-  const scope = Scope();
+  const env = Env();
   AssignmentTerm(
     SymTerm('foo'),
     NumTerm(42),
-  ).eval(scope);
+  ).eval(env);
   assert.deepEqual(
-    SymTerm('foo').eval(scope),
+    SymTerm('foo').eval(env),
     NumTerm(42),
   );
 }
@@ -961,7 +961,7 @@ if (typeof window === 'undefined') {
 if (typeof window === 'undefined') {
   const assert = require('assert');
   assert.throws(
-    () => ApTerm(NumTerm(37), NumTerm(42)).eval(Scope()),
+    () => ApTerm(NumTerm(37), NumTerm(42)).eval(Env()),
     /Cannot perform application on term: ‘NumTerm’/
   );
 }
@@ -969,11 +969,11 @@ if (typeof window === 'undefined') {
 if (typeof window === 'undefined') {
   const assert = require('assert');
   assert.deepEqual(
-    ApTerm(IncTerm, NumTerm(42)).eval(Scope()),
+    ApTerm(IncTerm, NumTerm(42)).eval(Env()),
     NumTerm(43),
   );
   assert.throws(
-    () => ApTerm(IncTerm, IncTerm).eval(Scope()),
+    () => ApTerm(IncTerm, IncTerm).eval(Env()),
     /Type error: ‘IncTerm’ needs one numeric argument/
   );
 }
@@ -981,11 +981,11 @@ if (typeof window === 'undefined') {
 if (typeof window === 'undefined') {
   const assert = require('assert');
   assert.deepEqual(
-    ApTerm(DecTerm, NumTerm(42)).eval(Scope()),
+    ApTerm(DecTerm, NumTerm(42)).eval(Env()),
     NumTerm(41),
   );
   assert.throws(
-    () => ApTerm(DecTerm, DecTerm).eval(Scope()),
+    () => ApTerm(DecTerm, DecTerm).eval(Env()),
     /Type error: ‘DecTerm’ needs one numeric argument/
   );
 }
@@ -996,15 +996,15 @@ if (typeof window === 'undefined') {
     ApTerm(
       ApTerm(AddTerm, NumTerm(42)),
       NumTerm(18),
-    ).eval(Scope()),
+    ).eval(Env()),
     NumTerm(60),
   );
   assert.deepEqual(
-    ApTerm(AddTerm, NumTerm(42)).eval(Scope()).print(),
+    ApTerm(AddTerm, NumTerm(42)).eval(Env()).print(),
     '<partial fn>',
   );
   assert.throws(
-    () => ApTerm(ApTerm(AddTerm, NilTerm), NumTerm(42)).eval(Scope()),
+    () => ApTerm(ApTerm(AddTerm, NilTerm), NumTerm(42)).eval(Env()),
     /Type error: ‘AddTerm’ needs two numeric arguments/,
   );
 }
@@ -1015,11 +1015,11 @@ if (typeof window === 'undefined') {
     ApTerm(
       ApTerm(MulTerm, NumTerm(4)),
       NumTerm(2),
-    ).eval(Scope()),
+    ).eval(Env()),
     NumTerm(8),
   );
   assert.throws(
-    () => ApTerm(ApTerm(MulTerm, NilTerm), NumTerm(42)).eval(Scope()),
+    () => ApTerm(ApTerm(MulTerm, NilTerm), NumTerm(42)).eval(Env()),
     /Type error: ‘MulTerm’ needs two numeric arguments/,
   );
 }
@@ -1027,43 +1027,43 @@ if (typeof window === 'undefined') {
 if (typeof window === 'undefined') {
   const assert = require('assert');
   assert.deepEqual(
-    ApTerm(ApTerm(DivTerm, NumTerm(4)), NumTerm(2)).eval(Scope()),
+    ApTerm(ApTerm(DivTerm, NumTerm(4)), NumTerm(2)).eval(Env()),
     NumTerm(2),
   );
   assert.deepEqual(
-    ApTerm(ApTerm(DivTerm, NumTerm(4)), NumTerm(3)).eval(Scope()),
+    ApTerm(ApTerm(DivTerm, NumTerm(4)), NumTerm(3)).eval(Env()),
     NumTerm(1),
   );
   assert.deepEqual(
-    ApTerm(ApTerm(DivTerm, NumTerm(4)), NumTerm(4)).eval(Scope()),
+    ApTerm(ApTerm(DivTerm, NumTerm(4)), NumTerm(4)).eval(Env()),
     NumTerm(1),
   );
   assert.deepEqual(
-    ApTerm(ApTerm(DivTerm, NumTerm(4)), NumTerm(5)).eval(Scope()),
+    ApTerm(ApTerm(DivTerm, NumTerm(4)), NumTerm(5)).eval(Env()),
     NumTerm(0),
   );
   assert.deepEqual(
-    ApTerm(ApTerm(DivTerm, NumTerm(5)), NumTerm(2)).eval(Scope()),
+    ApTerm(ApTerm(DivTerm, NumTerm(5)), NumTerm(2)).eval(Env()),
     NumTerm(2),
   );
   assert.deepEqual(
-    ApTerm(ApTerm(DivTerm, NumTerm(6)), NumTerm(-2)).eval(Scope()),
+    ApTerm(ApTerm(DivTerm, NumTerm(6)), NumTerm(-2)).eval(Env()),
     NumTerm(-3),
   );
   assert.deepEqual(
-    ApTerm(ApTerm(DivTerm, NumTerm(5)), NumTerm(-3)).eval(Scope()),
+    ApTerm(ApTerm(DivTerm, NumTerm(5)), NumTerm(-3)).eval(Env()),
     NumTerm(-1),
   );
   assert.deepEqual(
-    ApTerm(ApTerm(DivTerm, NumTerm(-5)), NumTerm(3)).eval(Scope()),
+    ApTerm(ApTerm(DivTerm, NumTerm(-5)), NumTerm(3)).eval(Env()),
     NumTerm(-1),
   );
   assert.deepEqual(
-    ApTerm(ApTerm(DivTerm, NumTerm(-5)), NumTerm(-3)).eval(Scope()),
+    ApTerm(ApTerm(DivTerm, NumTerm(-5)), NumTerm(-3)).eval(Env()),
     NumTerm(1),
   );
   assert.throws(
-    () => ApTerm(ApTerm(DivTerm, NilTerm), NumTerm(42)).eval(Scope()),
+    () => ApTerm(ApTerm(DivTerm, NilTerm), NumTerm(42)).eval(Env()),
     /Type error: ‘DivTerm’ needs two numeric arguments/,
   );
 }
@@ -1074,18 +1074,18 @@ if (typeof window === 'undefined') {
     ApTerm(
       ApTerm(EqTerm, NumTerm(0)),
       NumTerm(-2),
-    ).eval(Scope()),
+    ).eval(Env()),
     FTerm,
   );
   assert.deepEqual(
     ApTerm(
       ApTerm(EqTerm, NumTerm(-2)),
       NumTerm(-2),
-    ).eval(Scope()),
+    ).eval(Env()),
     TTerm,
   );
   assert.throws(
-    () => ApTerm(ApTerm(EqTerm, NilTerm), NumTerm(42)).eval(Scope()),
+    () => ApTerm(ApTerm(EqTerm, NilTerm), NumTerm(42)).eval(Env()),
     /Type error: ‘EqTerm’ needs two numeric arguments/,
   );
 }
@@ -1093,19 +1093,19 @@ if (typeof window === 'undefined') {
 if (typeof window === 'undefined') {
   const assert = require('assert');
   assert.deepEqual(
-    ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(-2)).eval(Scope()),
+    ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(-2)).eval(Env()),
     FTerm,
   );
   assert.deepEqual(
-    ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(0)).eval(Scope()),
+    ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(0)).eval(Env()),
     FTerm,
   );
   assert.deepEqual(
-    ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(2)).eval(Scope()),
+    ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(2)).eval(Env()),
     TTerm,
   );
   assert.throws(
-    () => ApTerm(ApTerm(LtTerm, NilTerm), NumTerm(42)).eval(Scope()),
+    () => ApTerm(ApTerm(LtTerm, NilTerm), NumTerm(42)).eval(Env()),
     /Type error: ‘LtTerm’ needs two numeric arguments/,
   );
 }
@@ -1113,15 +1113,15 @@ if (typeof window === 'undefined') {
 if (typeof window === 'undefined') {
   const assert = require('assert');
   assert.deepEqual(
-    ApTerm(NegTerm, NumTerm(0)).eval(Scope()),
+    ApTerm(NegTerm, NumTerm(0)).eval(Env()),
     NumTerm(0),
   );
   assert.deepEqual(
-    ApTerm(NegTerm, NumTerm(1)).eval(Scope()),
+    ApTerm(NegTerm, NumTerm(1)).eval(Env()),
     NumTerm(-1),
   );
   assert.throws(
-    () => ApTerm(NegTerm, NegTerm).eval(Scope()),
+    () => ApTerm(NegTerm, NegTerm).eval(Env()),
     /Type error: ‘NegTerm’ needs one numeric argument/
   );
 }
@@ -1132,7 +1132,7 @@ if (typeof window === 'undefined') {
     ApTerm(
       IncTerm,
       ApTerm(IncTerm, NumTerm(0)),
-    ).eval(Scope()),
+    ).eval(Env()),
     NumTerm(2),
   );
   assert.deepEqual(
@@ -1140,7 +1140,7 @@ if (typeof window === 'undefined') {
       IncTerm,
       ApTerm(IncTerm,
         ApTerm(IncTerm, NumTerm(0))),
-    ).eval(Scope()),
+    ).eval(Env()),
     NumTerm(3),
   );
 }
@@ -1154,7 +1154,7 @@ if (typeof window === 'undefined') {
         IncTerm,
       ),
       NumTerm(1),
-    ).eval(Scope()),
+    ).eval(Env()),
     NumTerm(3),
   );
   // TODO uncomment after Mul is implemented correctly
@@ -1165,7 +1165,7 @@ if (typeof window === 'undefined') {
   //       ApTerm(AddTerm, NumTerm(1)),
   //     ),
   //     NumTerm(1),
-  //   ).eval(Scope()),
+  //   ).eval(Env()),
   //   NumTerm(42),
   // );
 }
@@ -1179,7 +1179,7 @@ if (typeof window === 'undefined') {
         NumTerm(1),
       ),
       NumTerm(2),
-    ).eval(Scope()),
+    ).eval(Env()),
     NumTerm(3),
   );
 }
@@ -1193,7 +1193,7 @@ if (typeof window === 'undefined') {
         DecTerm,
       ),
       NumTerm(2),
-    ).eval(Scope()),
+    ).eval(Env()),
     NumTerm(2),
   );
 }
@@ -1204,7 +1204,7 @@ if (typeof window === 'undefined') {
     ApTerm(
       ApTerm(TTerm, NumTerm(1)),
       NumTerm(5),
-    ).eval(Scope()),
+    ).eval(Env()),
     NumTerm(1),
   );
 }
@@ -1215,7 +1215,7 @@ if (typeof window === 'undefined') {
     ApTerm(
       ApTerm(FTerm, NumTerm(1)),
       NumTerm(5),
-    ).eval(Scope()),
+    ).eval(Env()),
     NumTerm(5),
   );
 }
@@ -1223,7 +1223,7 @@ if (typeof window === 'undefined') {
 if (typeof window === 'undefined') {
   const assert = require('assert');
   assert.deepEqual(
-    ApTerm(ITerm, NumTerm(1)).eval(Scope()),
+    ApTerm(ITerm, NumTerm(1)).eval(Env()),
     NumTerm(1),
   );
 }
@@ -1236,7 +1236,7 @@ if (typeof window === 'undefined') {
 if (typeof window === 'undefined') {
   const assert = require('assert');
   assert.deepEqual(
-    ApTerm(ApTerm(ConsTerm, NumTerm(1)), NilTerm).eval(Scope()),
+    ApTerm(ApTerm(ConsTerm, NumTerm(1)), NilTerm).eval(Env()),
     PairTerm(NumTerm(1), NilTerm),
   );
 }
@@ -1249,7 +1249,7 @@ if (typeof window === 'undefined') {
     ApTerm(
       DrawTerm,
       ApTerm(ApTerm(ConsTerm, point(1, 1)), NilTerm),
-    ).eval(Scope()),
+    ).eval(Env()),
     ImageTerm([Pair(1, 1)]),
   );
   assert.deepEqual(
@@ -1262,14 +1262,14 @@ if (typeof window === 'undefined') {
           NilTerm,
         ),
       ),
-    ).eval(Scope()),
+    ).eval(Env()),
     ImageTerm([Pair(1, 2), Pair(1, 1)]),
   );
   assert.throws(
     () => ApTerm(
       DrawTerm,
       IncTerm,
-    ).eval(Scope()),
+    ).eval(Env()),
     /Type error: ‘draw’ expects a list/
   );
 }
@@ -1291,28 +1291,28 @@ if (typeof window === 'undefined') {
 
   assert.deepEqual(
     // nil
-    modulateTerm(Scope(), NilTerm),
+    modulateTerm(Env(), NilTerm),
     '00'.split(''),
   );
   assert.deepEqual(
     // ap ap cons nil nil
     // ap (ap cons nil) nil
     // list [nil] or pair (nil, nil)
-    modulateTerm(Scope(), ApTerm(ApTerm(ConsTerm, NilTerm), NilTerm)),
+    modulateTerm(Env(), ApTerm(ApTerm(ConsTerm, NilTerm), NilTerm)),
     '110000'.split(''),
   );
   assert.deepEqual(
     // ap ap cons 0 nil
     // ap (ap cons 0) nil
     // list [0] or pair (0, nil)
-    modulateTerm(Scope(), ApTerm(ApTerm(ConsTerm, NumTerm(0)), NilTerm)),
+    modulateTerm(Env(), ApTerm(ApTerm(ConsTerm, NumTerm(0)), NilTerm)),
     '1101000'.split(''),
   );
   assert.deepEqual(
     // ap ap cons 1 2
     // ap (ap cons 1) 2
     // pair (1, 2)
-    modulateTerm(Scope(), ApTerm(ApTerm(ConsTerm, NumTerm(1)), NumTerm(2))),
+    modulateTerm(Env(), ApTerm(ApTerm(ConsTerm, NumTerm(1)), NumTerm(2))),
     '110110000101100010'.split(''),
   );
   assert.deepEqual(
@@ -1320,7 +1320,7 @@ if (typeof window === 'undefined') {
     // ap (ap cons 1) (ap (ap cons 2) nil)
     // list [1, 2] or pair (1, pair (2, nil))
     modulateTerm(
-      Scope(),
+      Env(),
       ApTerm(
         ApTerm(ConsTerm, NumTerm(1)),
         ApTerm(ApTerm(ConsTerm, NumTerm(2)), NilTerm),
@@ -1391,7 +1391,7 @@ if (typeof window === 'undefined') {
 
   // equivalent of the test above
   assert.deepEqual(
-    handleInput(Scope(),'ap inc 37'),
+    handleInput(Env(),'ap inc 37'),
     Right(StringResult('38'))
   );
 
