@@ -88,13 +88,15 @@ function handleKeyDown(env, event) {
     }
     else if (!event.altKey && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
       event.preventDefault();
-      var inputText = input.value.trim();
-      if (inputText.length) {
-        var outputResult = handleInput(env, inputText);
-        var outputContainer = document.getElementById('output-container');
-        var dialogContainer = appendDialog(outputContainer, inputText, outputResult);
-        dialogContainer.scrollIntoView({ behavior: "smooth" });
-        input.value = null;
+      var inputLines = input.value.trim().split(/\n+/);
+      for (const inputText of inputLines) {
+        if (inputText.length) {
+          var outputResult = handleInput(env, inputText);
+          var outputContainer = document.getElementById('output-container');
+          var dialogContainer = appendDialog(outputContainer, inputText, outputResult);
+          dialogContainer.scrollIntoView({ behavior: "smooth" });
+          input.value = null;
+        }
       }
     }
   }
