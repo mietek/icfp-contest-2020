@@ -1269,6 +1269,13 @@ if (typeof window === 'undefined') {
     readTerm(tokeniseInput('ap inc 37')),
     Pair(ApTerm(IncTerm, NumTerm(37)), []),
   );
+
+  // equivalent of the test above
+  assert.deepEqual(
+    handleInput(Scope(),'ap inc 37'),
+    Right(StringResult('38'))
+  );
+
   assert.throws(
     () => readTerm(tokeniseInput('ap')),
     /Syntax error: ‘ap’ needs two arguments/
@@ -1380,4 +1387,40 @@ function printUnaryOp(op) {
 
 function printBinaryOp(op) {
   return op.opName + ' ' + op.arg1.print() + ' ' + op.arg2.print();
+}
+
+// handleInput : String -> Either String String
+function handleInput(scope, inputText) {
+  try {
+    var tokens = tokeniseInput(inputText);
+    var termAndMoreTokens = readTerm(tokens);
+    var moreTokens = termAndMoreTokens.snd;
+    if (moreTokens.length != 0) {
+      throw new Error('Unexpected token: ‘' + moreTokens[0] + '’');
+    }
+    var term = termAndMoreTokens.fst;
+    var value = evalTerm(scope, term);
+    if (typeof value.render !== 'undefined') {
+      return Right(BitmapResult(value.render()));
+    } else {
+      return Right(StringResult(printTerm(value)));
+    }
+  } catch (e) {
+    console.error(e);
+    return Left(e.message);
+  }
+}
+
+function StringResult(string) {
+  return {
+    tag: 'StringResult',
+    string: string,
+  };
+}
+
+function BitmapResult(bitmap) {
+  return {
+    tag: 'BitmapResult',
+    bitmap: bitmap,
+  };
 }
