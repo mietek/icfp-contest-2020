@@ -463,21 +463,43 @@ if (typeof window === 'undefined') {
 }
 
 // #12. Strict Less-Than
-function LtTerm(arg1, arg2) {
-  return {
-    tag: 'LtTerm',
-    opName: 'lt',
-    arg1: arg1,
-    arg2: arg2,
-    eval: function () {
-      return evalBinaryCompOp(this, function (num1, num2) {
+var LtTerm = {
+  tag: 'LtTerm',
+  opName: 'lt',
+  eval: function () {
+    return this;
+  },
+  apply: function (arg1) {
+    var opTerm = this;
+    return PartialFunctionTerm(function (arg2) {
+      return applyBinaryCompOp(opTerm, arg1, arg2, function (num1, num2) {
         return num1 < num2;
       });
-    },
-    print: function () {
-      return printBinaryOp(this);
-    }
-  };
+    });
+  },
+  print: function () {
+    return printBinaryOp(this);
+  }
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(-2)).eval(),
+    FalseTerm,
+  );
+  assert.deepEqual(
+    ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(0)).eval(),
+    FalseTerm,
+  );
+  assert.deepEqual(
+    ApTerm(ApTerm(LtTerm, NumTerm(0)), NumTerm(2)).eval(),
+    TrueTerm,
+  );
+  assert.throws(
+    () => ApTerm(ApTerm(LtTerm, NilTerm), NumTerm(42)).eval(),
+    /Type error: ‘lt’ needs two numeric arguments/,
+  );
 }
 
 // #13. Modulate: see #35 Modulate List
