@@ -33,6 +33,18 @@ function Right(right) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+// TODO convert nullary terms to functions to avoid issues with ordering in the
+// source.
+var NilTerm = {
+  tag: 'NilTerm',
+  eval: function () {
+    return this;
+  },
+  print: function () {
+    return 'nil';
+  }
+};
+
 // #1, #2, #3. Numbers and negative numbers
 function NumTerm(num) {
   if (!(this instanceof NumTerm)) {
@@ -105,6 +117,33 @@ AssignmentTerm.prototype.print = function () {
 };
 
 // #5. Application
+
+// PartialFunctionTerm represents a partially applied function. Partial
+// functions are not created when parsing the input, but they can appear during
+// evaluation.
+function PartialFunctionTerm(fn) {
+  if (!(this instanceof PartialFunctionTerm)) {
+    return new PartialFunctionTerm(fn);
+  }
+  return Object.assign(this, {
+    tag: 'PartialFunctionTerm',
+    opName: 'partial',
+    fn: fn,
+  });
+}
+
+PartialFunctionTerm.prototype.eval = function () {
+  return this;
+};
+
+PartialFunctionTerm.prototype.apply = function (arg) {
+  return this.fn(arg);
+};
+
+PartialFunctionTerm.prototype.print = function (arg) {
+  return '<partial fn>';
+};
+
 function ApTerm(arg1, arg2) {
   if (!(this instanceof ApTerm)) {
     return new ApTerm(arg1, arg2);
@@ -118,8 +157,11 @@ function ApTerm(arg1, arg2) {
 }
 
 ApTerm.prototype.eval = function () {
-  if (this.arg1.apply) {
-    return this.arg1.apply(this.arg2);
+  // Evaluate the first argument and see if it is a function, i.e. whether it
+  // implements the (internal) `apply` method.
+  var value1 = this.arg1.eval();
+  if (value1.apply) {
+    return value1.apply(this.arg2);
   } else {
     throw new Error(
       'Cannot perform application on term: ‘' + this.arg1.tag +
@@ -127,6 +169,20 @@ ApTerm.prototype.eval = function () {
     );
   }
 };
+
+// ApTerm.prototype.apply = function () {
+//   // This is called whenever ap is nested in ap, e.g. ap ap add 1 2.
+//   // We first evaluate the 2nd argument, then create a
+//   // eval 2nd arg
+//   if (this.arg1.apply) {
+//     return this.arg1.apply(this.arg2);
+//   } else {
+//     throw new Error(
+//       'Cannot perform application on term: ‘' + this.arg1.tag +
+//       '’. Did you forget to implement `apply`?'
+//     );
+//   }
+// };
 
 ApTerm.prototype.print = function () {
   return printBinaryOp(this);
@@ -199,21 +255,42 @@ if (typeof window === 'undefined') {
 }
 
 // #7. Sum
-function AddTerm(arg1, arg2) {
-  return {
-    tag: 'AddTerm',
-    opName: 'add',
-    arg1: arg1,
-    arg2: arg2,
-    eval: function () {
-      return evalBinaryNumOp(this, function (num1, num2) {
+var AddTerm = {
+  tag: 'AddTerm',
+  opName: 'add',
+  eval: function () {
+    return this;
+  },
+  apply: function (arg1) {
+    var opTerm = this;
+    return PartialFunctionTerm(function (arg2) {
+      return applyBinaryNumOp(opTerm, arg1, arg2, function (num1, num2) {
         return num1 + num2;
       });
-    },
-    print: function () {
-      return printBinaryOp(this);
-    }
-  };
+    });
+  },
+  print: function () {
+    return printBinaryOp(this);
+  }
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(
+      ApTerm(AddTerm, NumTerm(42)),
+      NumTerm(18),
+    ).eval(),
+    NumTerm(60),
+  );
+  assert.deepEqual(
+    ApTerm(AddTerm, NumTerm(42)).eval().print(),
+    '<partial fn>',
+  );
+  assert.throws(
+    () => ApTerm(ApTerm(AddTerm, NilTerm), NumTerm(42)).eval(),
+    /Type error: ‘add’ needs two numeric arguments/,
+  );
 }
 
 // #8. Variables
@@ -369,15 +446,7 @@ var ConsTerm = {
 // TODO
 
 // #28. Nil (Empty List)
-var NilTerm = {
-  tag: 'NilTerm',
-  eval: function () {
-    return this;
-  },
-  print: function () {
-    return 'nil';
-  }
-};
+// See NilTerm defined earlier.
 
 // #29. Is Nil (Is Empty List)
 // TODO
@@ -622,6 +691,8 @@ function readTerm(tokens) {
       return Pair(IncTerm, moreTokens);
     case 'dec':
       return Pair(DecTerm, moreTokens);
+    case 'add':
+      return Pair(AddTerm, moreTokens);
     case 't':
       return Pair(TrueTerm, moreTokens);
     case 'f':
@@ -638,8 +709,6 @@ function readTerm(tokens) {
     // TODO: clean up these symbols
     case 'mod':
       return readUnaryOp('mod', ModTerm, moreTokens);
-    case 'add':
-      return readBinaryOp('add', AddTerm, moreTokens);
     case 'mul':
       return readBinaryOp('mul', MulTerm, moreTokens);
     case 'div':
@@ -725,7 +794,7 @@ if (typeof window === 'undefined') {
     readTerm(tokeniseInput('foobar')),
     Pair(IdentifierTerm('foobar'), []),
   );
-  // Nullary symbols: inc, dec
+  // Nullary symbols: inc, dec, add
   assert.deepEqual(
     readTerm(tokeniseInput('inc')),
     Pair(IncTerm, []),
@@ -733,6 +802,10 @@ if (typeof window === 'undefined') {
   assert.deepEqual(
     readTerm(tokeniseInput('dec')),
     Pair(DecTerm, []),
+  );
+  assert.deepEqual(
+    readTerm(tokeniseInput('add')),
+    Pair(AddTerm, []),
   );
   // Binary: application
   assert.deepEqual(
@@ -814,10 +887,20 @@ function evalBinaryCompOp(op, fun) {
 }
 
 function applyUnaryNumOp(op, arg, fun) {
+  // TODO should this eval the arg?
   if (arg.tag != 'NumTerm') {
     throw new Error('Type error: ‘' + op.opName + '’ needs one numeric argument');
   }
   return NumTerm(fun(arg.num));
+}
+
+function applyBinaryNumOp(opTerm, arg1, arg2, fun) {
+  var val1 = arg1.eval();
+  var val2 = arg2.eval();
+  if (val1.tag != 'NumTerm' || val2.tag != 'NumTerm') {
+    throw new Error('Type error: ‘' + opTerm.opName + '’ needs two numeric arguments');
+  }
+  return NumTerm(fun(val1.num, val2.num));
 }
 
 //////////////////////////////////////////////////////////////////////////////
