@@ -522,7 +522,19 @@ var NilTerm = {
 };
 
 // #29. Is Nil (Is Empty List)
-// TODO
+var IsnilTerm = {
+  tag: 'IsnilTerm',
+  eval: function (env) {
+    return this;
+  },
+  apply: function (env, arg) {
+    var val = arg.eval(env);
+    return BoolTerm(val.tag == 'NilTerm');
+  },
+  print: function () {
+    return 'isnil';
+  }
+};
 
 // #30. List Construction Syntax
 // TODO
@@ -779,10 +791,8 @@ function readTerm(tokens) {
       return Pair(CdrTerm, moreTokens);
     case 'nil':
       return Pair(NilTerm, moreTokens);
-
-    // TODO: Implement isnil
     case 'isnil':
-      throw new Error('‘isnil’ is unimplemented');
+      return Pair(IsnilTerm, moreTokens);
 
     // TODO: Fix lists
     case '(':
@@ -1607,7 +1617,9 @@ assertRight('cdr', 'cdr');
 assertRight('ap cdr ap ap cons 0 1', '1');
 assertRight('nil', 'nil');
 // assertRight('ap nil 0', 't');
-// assertRight('isnil', 'isnil');
+assertRight('isnil', 'isnil');
+assertRight('ap isnil nil', 't');
+assertRight('ap isnil ap ap cons 0 1', 'f');
 // assertRight('()', 'nil');
 assertRight('vec', 'cons');
 // assertRight('if0', 'if0');
