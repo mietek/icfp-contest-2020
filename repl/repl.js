@@ -1550,3 +1550,12 @@ assertRight('ap i add', 'add');
 assertRight('cons', 'cons');
 assertRight('ap ap cons 1 2', 'cons 1 2');
 // assertRight('ap ap ap cons 1 2 3', 'cons 1 2 3');
+
+// assertRight('car', 'car');
+// assertRight('cdr', 'cdr');
+assertRight('nil', 'nil');
+// assertRight('ap nil 0', 't');
+// assertRight('isnil', 'isnil');
+// assertRight('()', 'nil');
+assertRight('vec', 'cons');
+// assertRight('if0', 'if0');
