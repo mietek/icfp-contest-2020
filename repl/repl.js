@@ -194,70 +194,7 @@ function LtTerm(arg1, arg2) {
   };
 }
 
-// #13. Modulate
-
-// modulateNum :: Int -> [Int]
-function modulateNum(num) {
-  const isNegative = num < 0 || Object.is(num, -0);
-  const signBits = isNegative ? [1, 0] : [0, 1];
-  const lengthTrailingBits = [0];
-  // this is true for both +0 and -0
-  if (num === 0) {
-    return signBits.concat(lengthTrailingBits);
-  }
-  const numberBits = Math.abs(num).toString(2).split('');
-  // pad numberBits with zeros, so that the length is a multiply of 4
-  const paddingBits = new Array((4 - numberBits.length % 4) % 4).fill(0);
-  const lengthBits = new Array(paddingBits.concat(numberBits).length / 4).fill(1);
-  return signBits
-    .concat(lengthBits)
-    .concat(lengthTrailingBits)
-    .concat(paddingBits)
-    .concat(numberBits);
-};
-
-if (typeof window === 'undefined') {
-  const assert = require('assert');
-  assert.deepEqual(modulateNum(0),   '010'.split(''));
-  assert.deepEqual(modulateNum(-0),  '100'.split(''));
-  assert.deepEqual(modulateNum(1),   '01100001'.split(''));
-  assert.deepEqual(modulateNum(-1),  '10100001'.split(''));
-  assert.deepEqual(modulateNum(2),   '01100010'.split(''));
-  assert.deepEqual(modulateNum(-2),  '10100010'.split(''));
-  assert.deepEqual(modulateNum(16),  '0111000010000'.split(''));
-  assert.deepEqual(modulateNum(-16), '1011000010000'.split(''));
-}
-
-function ModTerm(term) {
-  return {
-    tag: 'ModTerm',
-    term: term,
-    eval: function () {
-      var value = this.term.eval();
-      if (value.tag != 'NumTerm') {
-        throw new Error('Type error: ‘mod’ needs a numeric argument (TODO: ‘mod’ on lists)');
-      }
-      return ModulatedTerm(modulateNum(term.num));
-    },
-    print: function () {
-      return 'mod ' + this.term.print();
-    }
-  };
-};
-
-// Note: ModulatedTerm does not appear in inputs.
-function ModulatedTerm(bits) {
-  return {
-    tag: 'ModulatedTerm',
-    bits: bits,
-    eval: function () {
-      return this;
-    },
-    print: function () {
-      return '[ ' + this.bits.join(',') + ' ]';
-    }
-  };
-};
+// #13. Modulate: see #35 Modulate List
 
 // #14. Demodulate
 // TODO
@@ -364,7 +301,128 @@ var NilTerm = {
 // TODO
 
 // #35. Modulate List
-// TODO
+
+// modulateNum :: Int -> [Int]
+function modulateNum(num) {
+  const isNegative = num < 0 || Object.is(num, -0);
+  const signBits = isNegative ? [1, 0] : [0, 1];
+  const lengthTrailingBits = [0];
+  // this is true for both +0 and -0
+  if (num === 0) {
+    return signBits.concat(lengthTrailingBits);
+  }
+  const numberBits = Math.abs(num).toString(2).split('');
+  // pad numberBits with zeros, so that the length is a multiply of 4
+  const paddingBits = new Array((4 - numberBits.length % 4) % 4).fill(0);
+  const lengthBits = new Array(paddingBits.concat(numberBits).length / 4).fill(1);
+  return signBits
+    .concat(lengthBits)
+    .concat(lengthTrailingBits)
+    .concat(paddingBits)
+    .concat(numberBits);
+};
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(modulateNum(0),   '010'.split(''));
+  assert.deepEqual(modulateNum(-0),  '100'.split(''));
+  assert.deepEqual(modulateNum(1),   '01100001'.split(''));
+  assert.deepEqual(modulateNum(-1),  '10100001'.split(''));
+  assert.deepEqual(modulateNum(2),   '01100010'.split(''));
+  assert.deepEqual(modulateNum(-2),  '10100010'.split(''));
+  assert.deepEqual(modulateNum(16),  '0111000010000'.split(''));
+  assert.deepEqual(modulateNum(-16), '1011000010000'.split(''));
+}
+
+// modulateTerm :: Term -> [Int]
+function modulateTerm(term) {
+  if (term.tag === 'NilTerm') {
+    return [0, 0];
+  }
+  if (term.tag === 'ConsTerm') {
+    return [1, 1];
+  }
+  if (term.tag === 'ApTerm') {
+    return modulateTerm(term.arg1).concat(modulateTerm(term.arg2));
+  }
+  if (term.tag === 'NumTerm') {
+    return modulateNum(term.num);
+  }
+  throw new Error('modulateTerm cannot accept term of type: ' + term.tag);
+}
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+
+  assert.deepEqual(
+    // nil
+    modulateTerm(NilTerm),
+    '00'.split(''),
+  );
+  assert.deepEqual(
+    // ap ap cons nil nil
+    // ap (ap cons nil) nil
+    // list [nil] or pair (nil, nil)
+    modulateTerm(ApTerm(ApTerm(ConsTerm, NilTerm), NilTerm)),
+    '110000'.split(''),
+  );
+  assert.deepEqual(
+    // ap ap cons 0 nil
+    // ap (ap cons 0) nil
+    // list [0] or pair (0, nil)
+    modulateTerm(ApTerm(ApTerm(ConsTerm, NumTerm(0)), NilTerm)),
+    '1101000'.split(''),
+  );
+  assert.deepEqual(
+    // ap ap cons 1 2
+    // ap (ap cons 1) 2
+    // pair (1, 2)
+    modulateTerm(ApTerm(ApTerm(ConsTerm, NumTerm(1)), NumTerm(2))),
+    '110110000101100010'.split(''),
+  );
+  assert.deepEqual(
+    // ap ap cons 1 ap ap cons 2 nil
+    // ap (ap cons 1) (ap (ap cons 2) nil)
+    // list [1, 2] or pair (1, pair (2, nil))
+    modulateTerm(
+      ApTerm(
+        ApTerm(ConsTerm, NumTerm(1)),
+        ApTerm(ApTerm(ConsTerm, NumTerm(2)), NilTerm),
+      ),
+    ),
+    '1101100001110110001000'.split(''),
+  );
+}
+
+function ModTerm(term) {
+  return {
+    tag: 'ModTerm',
+    term: term,
+    eval: function () {
+      var value = this.term.eval();
+      if (value.tag != 'NumTerm') {
+        throw new Error('Type error: ‘mod’ needs a numeric argument (TODO: ‘mod’ on lists)');
+      }
+      return ModulatedTerm(modulateTerm(term));
+    },
+    print: function () {
+      return 'mod ' + this.term.print();
+    }
+  };
+};
+
+// Note: ModulatedTerm does not appear in inputs.
+function ModulatedTerm(bits) {
+  return {
+    tag: 'ModulatedTerm',
+    bits: bits,
+    eval: function () {
+      return this;
+    },
+    print: function () {
+      return '[ ' + this.bits.join(',') + ' ]';
+    }
+  };
+};
 
 // #36. Send ( 0 )
 // TODO
