@@ -1276,6 +1276,9 @@ if (typeof window === 'undefined') {
     Right(StringResult('38'))
   );
 
+  //another equivalent of the test above
+  assertRight('ap inc 37', '38');
+
   assert.throws(
     () => readTerm(tokeniseInput('ap')),
     /Syntax error: ‘ap’ needs two arguments/
@@ -1423,4 +1426,15 @@ function BitmapResult(bitmap) {
     tag: 'BitmapResult',
     bitmap: bitmap,
   };
+}
+
+// assertRight : String -> String -> ()
+function assertRight(string, expectedRight) {
+  if (typeof window === 'undefined') {
+    const assert = require('assert');
+    assert.deepEqual(
+      handleInput(Scope(), string),
+      Right(StringResult(expectedRight))
+    );
+  }
 }
