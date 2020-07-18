@@ -116,7 +116,8 @@ AssignmentTerm.prototype.print = function () {
   return this.identifier.print() + ' = ' + this.term.print();
 };
 
-// #5. Application
+// #5. Application (this is technically #17, but we need it to test all the
+// binary operators.
 
 // PartialFunctionTerm represents a partially applied function. Partial
 // functions are not created when parsing the input, but they can appear during
@@ -366,7 +367,26 @@ function LtTerm(arg1, arg2) {
 // TODO
 
 // #17. Function Application
-// TODO
+// See #5: Application. Here we just define more tests.
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  assert.deepEqual(
+    ApTerm(
+      IncTerm,
+      ApTerm(IncTerm, NumTerm(0)),
+    ).eval(),
+    NumTerm(2),
+  );
+  assert.deepEqual(
+    ApTerm(
+      IncTerm,
+      ApTerm(IncTerm,
+        ApTerm(IncTerm, NumTerm(0))),
+    ).eval(),
+    NumTerm(3),
+  );
+}
 
 // #18. S Combinator
 // TODO
@@ -873,11 +893,11 @@ function evalBinaryCompOp(op, fun) {
 }
 
 function applyUnaryNumOp(op, arg, fun) {
-  // TODO should this eval the arg?
-  if (arg.tag != 'NumTerm') {
+  var val = arg.eval();
+  if (val.tag != 'NumTerm') {
     throw new Error('Type error: ‘' + op.opName + '’ needs one numeric argument');
   }
-  return NumTerm(fun(arg.num));
+  return NumTerm(fun(val.num));
 }
 
 function applyBinaryNumOp(opTerm, arg1, arg2, fun) {
