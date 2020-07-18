@@ -64,43 +64,43 @@ NumTerm.prototype.print = function () {
 // #4. Equality
 // TODO: Actually, “equality” is symbol binding, and so, needs symbols and scopes
 
-// TODO: Rename “identifier” to “symbol”
-function IdentifierTerm(identifier) {
-  if (!(this instanceof IdentifierTerm)) {
-    return new IdentifierTerm(identifier);
+function SymTerm(sym) {
+  if (!(this instanceof SymTerm)) {
+    return new SymTerm(sym);
   }
   return Object.assign(this, {
-    tag: 'IdentifierTerm',
-    identifier: identifier,
+    tag: 'SymTerm',
+    sym: sym,
   });
 }
-IdentifierTerm.prototype.eval = function (scope) {
+SymTerm.prototype.eval = function (scope) {
   // TODO: Throw an “unbound symbol” exception here
-  return scope[this.identifier];
+  return scope[this.sym];
 };
-IdentifierTerm.prototype.print = function () {
-  return this.identifier.toString();
+SymTerm.prototype.print = function () {
+  return this.sym;
 };
 
 // TODO: Maybe assignments shouldn’t be terms; not sure
 // TODO: Rename variables and members here
-function AssignmentTerm(identifierTerm, term) {
+// TODO: Assignments should use symbols directly
+function AssignmentTerm(symTerm, term) {
   if (!(this instanceof AssignmentTerm)) {
-    return new AssignmentTerm(identifierTerm, term);
+    return new AssignmentTerm(symTerm, term);
   }
   return Object.assign(this, {
     tag: 'AssignmentTerm',
-    identifierTerm: identifierTerm,
+    symTerm: symTerm,
     term: term,
   });
 }
 AssignmentTerm.prototype.eval = function (scope) {
   // TODO: Maybe disallow multiple assignment here
-  scope[this.identifierTerm.identifier] = this.term;
+  scope[this.symTerm.sym] = this.term;
   return this;
 };
 AssignmentTerm.prototype.print = function () {
-  return this.identifierTerm.print() + ' = ' + this.term.print();
+  return this.symTerm.print() + ' = ' + this.term.print();
 };
 
 // #5. Successor
@@ -781,8 +781,8 @@ function readTerm(tokens) {
       throw new Error('‘interact’ is unimplemented');
 
     default:
-      return returnIdentifierOrReadAssignment(IdentifierTerm(headToken), moreTokens);
-      // return Pair(IdentifierTerm(headToken), moreTokens);
+      return returnSymOrReadAssignment(SymTerm(headToken), moreTokens);
+      // return Pair(SymTerm(headToken), moreTokens);
       // throw new Error('Unrecognized token: ‘' + headToken + '’');
   }
 }
@@ -825,16 +825,16 @@ function readTermInParens(tokens) {
   return Pair(term, moreTokens.slice(1));
 }
 
-// returnIdentifierOrReadAssignment : IdentifierTerm -> Array String -> (Term, Array String)
-function returnIdentifierOrReadAssignment(identifierTerm, tokens) {
+// returnSymOrReadAssignment : SymTerm -> Array String -> (Term, Array String)
+function returnSymOrReadAssignment(symTerm, tokens) {
   if (tokens.length === 0) {
-    return Pair(identifierTerm, []);
+    return Pair(symTerm, []);
   }
   var headToken = tokens[0];
   var moreTokens = tokens.slice(1);
   if (headToken === '=') {
     var result = readTerm(moreTokens);
-    return Pair(AssignmentTerm(identifierTerm, result.fst), result.snd);
+    return Pair(AssignmentTerm(symTerm, result.fst), result.snd);
   }
   throw new Error('no terms on the right side of =');
 }
@@ -942,18 +942,18 @@ if (typeof window === 'undefined') {
 
 if (typeof window === 'undefined') {
   const assert = require('assert');
-  assert.strictEqual(IdentifierTerm('foo').print(), 'foo');
+  assert.strictEqual(SymTerm('foo').print(), 'foo');
 }
 
 if (typeof window === 'undefined') {
   const assert = require('assert');
   const scope = Scope();
   AssignmentTerm(
-    IdentifierTerm('foo'),
+    SymTerm('foo'),
     NumTerm(42),
   ).eval(scope);
   assert.deepEqual(
-    IdentifierTerm('foo').eval(scope),
+    SymTerm('foo').eval(scope),
     NumTerm(42),
   );
 }
@@ -1341,10 +1341,10 @@ if (typeof window === 'undefined') {
     readTerm(tokenizeInput('-42')),
     Pair(NumTerm(-42), []),
   );
-  // Identifiers
+  // Symbols
   assert.deepEqual(
     readTerm(tokenizeInput('foobar')),
-    Pair(IdentifierTerm('foobar'), []),
+    Pair(SymTerm('foobar'), []),
   );
   // Nullary symbols: inc, dec, add, mul, div, eq, lt, neq, cons
   assert.deepEqual(
@@ -1408,7 +1408,7 @@ if (typeof window === 'undefined') {
     readTerm(tokenizeInput('checkerboard = nil')),
     Pair(
       AssignmentTerm(
-        IdentifierTerm('checkerboard'),
+        SymTerm('checkerboard'),
         NilTerm,
       ),
       [],
@@ -1418,7 +1418,7 @@ if (typeof window === 'undefined') {
     readTerm(tokenizeInput('checkerboard = ap nil nil')),
     Pair(
       AssignmentTerm(
-        IdentifierTerm('checkerboard'),
+        SymTerm('checkerboard'),
         ApTerm(NilTerm, NilTerm),
       ),
       [],
@@ -1432,7 +1432,7 @@ if (typeof window === 'undefined') {
     readTerm(tokenizeInput('checkerboard = nil nil')),
     Pair(
       AssignmentTerm(
-        IdentifierTerm('checkerboard'),
+        SymTerm('checkerboard'),
         NilTerm,
       ),
       ['nil'],
