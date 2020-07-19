@@ -772,6 +772,71 @@ function modulateTerm(env, term) {
   throw new Error('modulateTerm cannot accept term of type: ' + val.tag);
 }
 
+// demodulateNum : String -> Result (Pair Term String) Nothing
+function demodulateNum(bits) {
+  let length = 0;
+  while (bits[0] === '1') {
+    length++;
+    bits = bits.slice(1);
+  }
+  if (bits[0] === '0') {
+    bits = bits.slice(1);
+  } else {
+    // The length bits did not end with a zero.
+    return Left();
+  }
+  if (length === 0) {
+    return Right(Pair(0, bits));
+  }
+  if (bits.length < length) {
+    // We don’t have enough remaining bits to read the number.
+    return Left();
+  }
+  const numBits = bits.slice(0, length * 4);
+  bits = bits.slice(length * 4);
+  const num = parseInt(numBits, 2);
+  return Right(Pair(num, bits));
+}
+
+// demodulate : String -> Result (Pair Term String) Nothing
+function demodulate(bits) {
+  if (bits.slice(0, 2) === '00') {
+    return Right(Pair(NilTerm, bits.slice(2)));
+  }
+  if (bits.slice(0, 2) === '11') {
+    // Parse the first element of the pair from the remaining input.
+    const carResult = demodulate(bits.slice(2));
+    if (carResult.tag === 'Left') {
+      // We failed to parse the first element.
+      return Left();
+    }
+    const carTerm = carResult.right.fst;
+    const carRest = carResult.right.snd;
+    // Parse the second element from what is left after parsing the first.
+    const cdrResult = demodulate(carRest);
+    if (cdrResult.tag === 'Left') {
+      // We failed to parse the second element.
+      return Left();
+    }
+    const cdrTerm = cdrResult.right.fst;
+    const cdrRest = cdrResult.right.snd;
+    const pairTerm = PairTerm(carTerm, cdrTerm);
+    return Right(Pair(pairTerm, cdrRest));
+  }
+  if (bits.slice(0, 2) === '01' || bits.slice(0, 2) === '10') {
+    const numResult = demodulateNum(bits.slice(2));
+    if (numResult.tag === 'Left') {
+      return Left();
+    }
+    const num = numResult.right.fst;
+    const rest = numResult.right.snd;
+    const sign = bits.slice(0, 2) === '01' ? 1 : -1;
+    const numTerm = NumTerm(sign * num);
+    return Right(Pair(numTerm, rest));
+  }
+  return Left();
+}
+
 var ModTerm = {
   tag: 'ModTerm',
   eval: function (env) {
@@ -814,6 +879,31 @@ var ModemTerm = {
     // Return the reduced term. We evaluate the term twice (once in
     // modulateTerm, once here), but this is just a performance issue.
     return term.eval(env);
+  },
+  print: function () {
+    return 'mod';
+  },
+};
+
+var DemTerm = {
+  tag: 'DemTerm',
+  eval: function (env) {
+    return this;
+  },
+  apply: function (env, term) {
+    const val = term.eval(env);
+    if (val.tag !== 'ModulatedTerm') {
+      throw new Error('Type error: ‘dem’ needs a modulated signal argument');
+    }
+    const bits = val.bits.join('');
+    const result = demodulate(bits);
+    if (result.tag === 'Left') {
+      throw new Error('demodulate failed on input: ' + bits);
+    }
+    if (result.right.snd.length > 0) {
+      throw new Error('demodulate failed on input: ' + bits);
+    }
+    return result.right.fst;
   },
   print: function () {
     return 'mod';
@@ -871,12 +961,12 @@ function readTerm(tokens) {
       return Pair(LtTerm, moreTokens);
     case 'mod':
       return Pair(ModTerm, moreTokens);
+    case 'dem':
+      return Pair(DemTerm, moreTokens);
     case 'modem':
       return Pair(ModemTerm, moreTokens);
 
-    // TODO: Implement dem, send
-    case 'dem':
-      throw new Error('‘dem’ is unimplemented');
+    // TODO: Implement send
     case 'send':
       throw new Error('‘send’ is unimplemented');
 
@@ -1525,6 +1615,40 @@ if (typeof window === 'undefined') {
 
 if (typeof window === 'undefined') {
   const assert = require('assert');
+  // Valid empty list
+  assert.deepEqual(
+    demodulate('00'),
+    Right(Pair(
+      NilTerm,
+      '',
+    )),
+  );
+  // Valid list containing a nil.
+  assert.deepEqual(
+    demodulate('110000'),
+    Right(Pair(
+      PairTerm(NilTerm, NilTerm),
+      '',
+    )),
+  );
+  // Numbers
+  assert.deepEqual(demodulate('010'), Right(Pair(NumTerm(0), '')));
+  assert.deepEqual(demodulate('100'), Right(Pair(NumTerm(-0), '')));
+  assert.deepEqual(demodulate('01100001'), Right(Pair(NumTerm(1), '')));
+  assert.deepEqual(demodulate('10100001'), Right(Pair(NumTerm(-1), '')));
+  assert.deepEqual(demodulate('01100010'), Right(Pair(NumTerm(2), '')));
+  assert.deepEqual(demodulate('10100010'), Right(Pair(NumTerm(-2), '')));
+  assert.deepEqual(demodulate('0111000010000'), Right(Pair(NumTerm(16), '')));
+  assert.deepEqual(demodulate('1011000010000'), Right(Pair(NumTerm(-16), '')));
+  // Invalid input
+  assert.deepEqual(
+    demodulate('0'),
+    Left(),
+  );
+}
+
+if (typeof window === 'undefined') {
+  const assert = require('assert');
   // Numbers and negative numbers
   assert.deepEqual(
     readTerm(tokenizeInput('42')),
@@ -1796,4 +1920,16 @@ assertEvalTerm('ap modem ap ap cons 1 nil', PairTerm(NumTerm(1), NilTerm));
 assertEvalThrows(
   'ap modem ap add 1',
   /modulateTerm cannot accept term of type: PartialFunctionTerm/,
+);
+
+assertEvalTerm('dem', DemTerm);
+assertEvalTerm('ap dem ap mod 0', NumTerm(0));
+assertEvalTerm('ap dem ap mod 1', NumTerm(1));
+assertEvalTerm(
+  'ap dem ap mod ap ap cons 1 nil',
+  PairTerm(NumTerm(1), NilTerm),
+);
+assertEvalThrows(
+  'ap dem ap add 1',
+  /Type error: ‘dem’ needs a modulated signal argument/
 );
