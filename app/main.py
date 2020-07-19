@@ -185,5 +185,29 @@ if False:
     print(_make_request_body([0]))
 
     print(_parse_response_body('1101000'))
+    print(_parse_response_body('110110001011011111111111111110111101110101100000100110111000010001000101100100100010000000110000'))
 
     print(_parse_response_body('1101100001110111110011100111010001100'))
+
+    print(_make_request_body([2, 1113939892088752268, None]))
+
+
+def _request_url(server_url, api_key=None):
+    url = f'{server_url}/aliens/send'
+    if api_key is not None:
+        return url + f'?apiKey={api_key}'
+    else:
+        url
+
+
+def _send_val(val, server_url, api_key=None):
+    resp = requests.post(url=_request_url(server_url, api_key),
+                         data=_make_request_body(val).encode())
+    resp.raise_for_status()
+
+    return _parse_response_body(resp.text)
+
+
+if False:
+    # __api_key = '<PUT API KEY HERE>'
+    print(_send_val([0], 'https://icfpc2020-api.testkontur.ru', __api_key))
