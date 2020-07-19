@@ -434,19 +434,22 @@ def main():
     sender_f = fnt.partial(send_dsl, server_url=server_url, api_key=None)
 
     print(f'Joining as {player_key}')
-    send_join(player_key,
-              sender_f=sender_f)
+    join_game_resp = send_join(player_key,
+                               sender_f=sender_f)
+    our_role = join_game_resp.get('static_game_info', {}).get('role')
+    print(f'Joinining as {our_role}, whole game resp = {join_game_resp}')
 
     print(f'Starting with arbitrary ship parameters')
-    send_start(player_key,
-               x0=42,
-               x1=0,
-               x2=0,
-               x3=1,
-               sender_f=sender_f)
+    start_game_resp = send_start(player_key,
+                                 x0=42,
+                                 x1=0,
+                                 x2=0,
+                                 x3=1,
+                                 sender_f=sender_f)
+    print(f'Start game resp = {start_game_resp}')
 
     # TODO: use game_response and send commands
-    print("There nothing more here, exiting.")
+    print("There's nothing more here, exiting.")
 
 
 if __name__ == '__main__':
