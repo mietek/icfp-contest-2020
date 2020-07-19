@@ -210,7 +210,18 @@ def _request_url(server_url, api_key=None):
         url
 
 
-def send_val(val, server_url, api_key=None):
+DSL = t.Union[None,
+              int,
+              t.List['DSL']]
+
+
+def send_dsl(val: DSL, server_url, api_key=None):
+    '''Send value encoded in the Python DSL, that is:
+    `nil` is `None`
+    `42` is 42
+    `ap ap cons 42 nil` is [42]
+    `ap ap cons 1 ap ap cons 2 nil` is `[1, 2]`
+    '''
     resp = requests.post(url=_request_url(server_url, api_key),
                          data=make_request_body(val).encode())
     resp.raise_for_status()
@@ -218,8 +229,62 @@ def send_val(val, server_url, api_key=None):
     return parse_response_body(resp.text)
 
 
+# For backwards compatibility
+send_val = send_dsl
+
+
 if False:
     # __api_key = '<PUT API KEY HERE>'
-    print(send_val([0], 'https://icfpc2020-api.testkontur.ru', __api_key))
-    print(send_val([1], 'https://icfpc2020-api.testkontur.ru', __api_key))
-    print(send_val([1, None, None], 'https://icfpc2020-api.testkontur.ru', __api_key))
+    print(send_dsl([0], 'https://icfpc2020-api.testkontur.ru', __api_key))
+    print(send_dsl([1], 'https://icfpc2020-api.testkontur.ru', __api_key))
+    print(send_dsl([1, None, None], 'https://icfpc2020-api.testkontur.ru', __api_key))
+    print(send_dsl([1, None, None], 'https://icfpc2020-api.testkontur.ru', __api_key))
+    print(send_dsl([1, 0], 'https://icfpc2020-api.testkontur.ru', __api_key))
+
+    print(send_dsl([2, 1113939892088752268, None], 'https://icfpc2020-api.testkontur.ru', __api_key))
+
+
+def _create_request_dsl():
+    '''https://message-from-space.readthedocs.io/en/latest/game.html#create
+    '''
+    return [1, 0]
+
+
+def _join_request_dsl(player_key: int):
+    '''https://message-from-space.readthedocs.io/en/latest/game.html#join
+    '''
+    return [2, player_key, None]
+
+
+def _start_request_dsl(player_key: int, x0, x1, x2, x3):
+    '''https://message-from-space.readthedocs.io/en/latest/game.html#start
+    `x0`...`x3` - "initial ship parameters", whatever that means. Probably positive ints.
+    '''
+    return [3, player_key, [x0, x1, x2, x3]]
+
+
+def _commands_request_dsl(player_key: int, commands: t.List[t.List[DSL]]):
+    '''https://message-from-space.readthedocs.io/en/latest/game.html#commands
+    Each command in `commands` is a list of shape `[type, ship_id, ...]` where ... is command-specific parameters.
+    '''
+    return [4, player_key, commands]
+
+
+DSLVector = t.List[int]
+
+
+def _accelerate_command_dsl(ship_id: int, vector: DSLVector):
+    '''Accelerates ship identified by `ship_id` to the direction opposite to `vector`.'''
+    return [0, ship_id, vector]
+
+
+def _detonate_command_dsl(ship_id: int):
+    '''Detonates `ship_id`'''
+    return [1, ship_id]
+
+
+def _shoot_command_dsl(ship_id: int, target: DSLVector, x3):
+    '''`target` is a vector with coordinates of the shooting target.
+    `x3` is unknown.
+    '''
+    return [2, ship_id, target, x3]
