@@ -1,0 +1,13 @@
+This project is based on starter kit for Haskell.
+
+Then, we've added REPL implementation in JS. Use it by opening the [HTML file](repl/index.html) in your browser. Run tests with `node repl/repl.js`.
+
+Then, we've changed the server implementation to Python. Install deps with:
+
+```
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+Run tests with `python -m pytest .'`
