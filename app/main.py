@@ -2,6 +2,7 @@ import sys
 import math
 import itertools as itt
 import typing as t
+import collections as c
 
 import requests
 
@@ -58,11 +59,14 @@ def _demodulate_number(bits):
     return _int_from_bits(number_bits), bits[end_bit_index:]
 
 
-def demodulate_bits(bits: [bool]) -> t.Tuple[t.Union[int, list],
+Cons = c.namedtuple('Cons', ['car', 'cdr'])
+
+
+def demodulate_bits(bits: [bool]) -> t.Tuple[t.Union[int, Cons, None],
                                               t.List[bool]]:
-    if bits[:2] == [1, 1]:
-        # cons cell
-        pass
+    if bits[:2] == [0, 0]:
+        # nil
+        return None, bits[2:]
 
     elif bits[:2] == [0, 1]:
         # positive number
@@ -72,6 +76,12 @@ def demodulate_bits(bits: [bool]) -> t.Tuple[t.Union[int, list],
         # negative number
         num, rest_bits = _demodulate_number(bits[2:])
         return -num, rest_bits
+
+    elif bits[:2] == [1, 1]:
+        # cons cell
+        val1, rest1 = demodulate_bits(bits[2:])
+        val2, rest2 = demodulate_bits(rest1)
+        return Cons(val1, val2), rest2
 
     else:
         raise ValueError(f'Invalid starting bits: {bits}')
