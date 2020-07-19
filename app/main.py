@@ -87,14 +87,30 @@ def demodulate_bits(bits: [bool]) -> t.Tuple[t.Union[int, Cons, None],
         raise ValueError(f'Invalid starting bits: {bits}')
 
 
-def _iter_cons_tree(cons_tree):
+def _iter_cons_tree(cons_tree: Cons):
     car, cdr = cons_tree
-    yield car
+
+    if isinstance(car, Cons):
+        yield list(_iter_cons_tree(car))
+    else:
+        yield car
+
     if cdr is not None:
         yield from _iter_cons_tree(cdr)
 
 
-def _cons_tree_to_list(cons_tree):
+# It's the notation we use for specifying transmittable data
+# without implementing the alien language AST terms:
+# `nil` is `None`
+# `42` is 42
+# `ap ap cons 42 nil` is [42]
+# `ap ap cons 1 ap ap cons 2 nil` is `[1, 2]`
+DSL = t.Union[None,
+              int,
+              t.List['DSL']]
+
+
+def _cons_tree_to_list(cons_tree) -> DSL:
     return list(_iter_cons_tree(cons_tree))
 
 
@@ -150,7 +166,7 @@ def modulate(val: t.Union[int, Cons, None]) -> [bool]:
         raise ValueError(f"Can't modulate value {val} of type {type(val)}")
 
 
-def _make_cons_tree(val):
+def _make_cons_tree(val: DSL):
     if val is None or val == []:
         return None
 
@@ -172,14 +188,14 @@ if False:
     print(_make_cons_tree([None]))
 
 
-def make_request_body(val: t.Union[int, list, None]) -> str:
+def make_request_body(val: DSL) -> str:
     bits = modulate(_make_cons_tree(val))
     return ''.join(map(str, bits))
 
 
-def parse_response_body(body: str):
+def parse_response_body(body: str) -> DSL:
     bits = list(map(int, body))
-    assert set(bits) == {0, 1}, f'Invalid characters in {body}'
+    assert set(bits).issubset({0, 1}), f'Invalid characters in {body}'
     demodulated, _ = demodulate_bits(bits)
     if isinstance(demodulated, Cons):
         return _cons_tree_to_list(demodulated)
@@ -210,7 +226,13 @@ def _request_url(server_url, api_key=None):
         url
 
 
-def send_val(val, server_url, api_key=None):
+def send_dsl(val: DSL, server_url, api_key=None):
+    '''Send value encoded in the Python DSL, that is:
+    `nil` is `None`
+    `42` is 42
+    `ap ap cons 42 nil` is [42]
+    `ap ap cons 1 ap ap cons 2 nil` is `[1, 2]`
+    '''
     resp = requests.post(url=_request_url(server_url, api_key),
                          data=make_request_body(val).encode())
     resp.raise_for_status()
@@ -218,8 +240,168 @@ def send_val(val, server_url, api_key=None):
     return parse_response_body(resp.text)
 
 
+# For backwards compatibility
+send_val = send_dsl
+
+
 if False:
     # __api_key = '<PUT API KEY HERE>'
-    print(send_val([0], 'https://icfpc2020-api.testkontur.ru', __api_key))
-    print(send_val([1], 'https://icfpc2020-api.testkontur.ru', __api_key))
-    print(send_val([1, None, None], 'https://icfpc2020-api.testkontur.ru', __api_key))
+    print(send_dsl([0], 'https://icfpc2020-api.testkontur.ru', __api_key))
+    print(send_dsl([1], 'https://icfpc2020-api.testkontur.ru', __api_key))
+    print(send_dsl([1, None, None], 'https://icfpc2020-api.testkontur.ru', __api_key))
+    print(send_dsl([1, None, None], 'https://icfpc2020-api.testkontur.ru', __api_key))
+    print(send_dsl([1, 0], 'https://icfpc2020-api.testkontur.ru', __api_key))
+
+    print(send_dsl([2, 1113939892088752268, None], 'https://icfpc2020-api.testkontur.ru', __api_key))
+
+
+def _countdown_request_dsl():
+    return [0]
+
+
+def _create_request_dsl():
+    '''https://message-from-space.readthedocs.io/en/latest/game.html#create
+    '''
+    return [1, 0]
+
+
+def _join_request_dsl(player_key: int):
+    '''https://message-from-space.readthedocs.io/en/latest/game.html#join
+    '''
+    return [2, player_key, None]
+
+
+def _start_request_dsl(player_key: int, x0, x1, x2, x3):
+    '''https://message-from-space.readthedocs.io/en/latest/game.html#start
+    `x0`...`x3` - "initial ship parameters", whatever that means. Probably positive ints.
+    '''
+    return [3, player_key, [x0, x1, x2, x3]]
+
+
+def _commands_request_dsl(player_key: int, commands: t.List[t.List[DSL]]):
+    '''https://message-from-space.readthedocs.io/en/latest/game.html#commands
+    Each command in `commands` is a list of shape `[type, ship_id, ...]` where ... is command-specific parameters.
+    '''
+    return [4, player_key, commands]
+
+
+DSLVector = t.List[int]
+
+
+def _accelerate_command_dsl(ship_id: int, vector: DSLVector):
+    '''Accelerates ship identified by `ship_id` to the direction opposite to `vector`.'''
+    return [0, ship_id, vector]
+
+
+def _detonate_command_dsl(ship_id: int):
+    '''Detonates `ship_id`'''
+    return [1, ship_id]
+
+
+def _shoot_command_dsl(ship_id: int, target: DSLVector, x3):
+    '''`target` is a vector with coordinates of the shooting target.
+    `x3` is unknown.
+    '''
+    return [2, ship_id, target, x3]
+
+
+def _parse_create_response(resp) -> (int, int):
+    '''Returns attacker, defender player key'''
+    (success,
+     ((attacker_flag, attacker_key),
+      (defender_flag, defender_key))) = resp
+
+    assert success == 1, f'Invalid create response {resp}'
+    assert attacker_flag == 0, f'Invalid create response {resp}'
+    assert defender_flag == 1, f'Invalid create response {resp}'
+
+    return attacker_key, defender_key
+
+
+def _parse_game_stage(game_stage: DSL):
+    if game_stage == 0:
+        return 'not_started_yet'
+    elif game_stage == 1:
+        return 'already_started'
+    elif game_stage == 2:
+        return 'finished'
+    else:
+        raise ValueError(f'Invalid game stage: {game_stage}')
+
+
+def _parse_role(role):
+    if role == 0:
+        return 'attacker'
+    elif role == 1:
+        return 'defender'
+    else:
+        raise ValueError(f'Invalid game role: {role}')
+
+
+def _parse_static_game_info(info):
+    x0, role, x2, x3, x4 = info
+    return {'role': _parse_role(role),
+            'x0': x0,
+            'x2': x2,
+            'x3': x3,
+            'x4': x4}
+
+
+def _parse_game_state(state):
+    if state is None:
+        return None
+
+    game_tick, x1, ships_and_commands = state
+    return {'game_tick': game_tick,
+            'x1': x1,
+            'ships_and_commands': ships_and_commands}
+
+
+def _parse_game_response(game_resp: DSL):
+    if game_resp == [0]:
+        return {'success': False}
+    else:
+        success, game_stage, static_game_info, game_state = game_resp
+        assert success == 1, f'Invalid `success` in game response {game_resp}'
+
+        return {'success': success,
+                'game_stage': _parse_game_stage(game_stage),
+                'static_game_info': _parse_static_game_info(static_game_info),
+                'game_state': _parse_game_state(game_state)}
+
+
+TEST_SERVER_URL = 'https://icfpc2020-api.testkontur.ru'
+API_KEY = '69169703bf0e41f99bec6790ff8ec971'
+
+
+def send_to_test(dsl):
+    return send_dsl(dsl, TEST_SERVER_URL, API_KEY)
+
+
+def send_create(sender_f=None):
+    if sender_f is None:
+        sender_f = send_to_test
+
+    return _parse_create_response(sender_f(_create_request_dsl()))
+
+
+def send_join(player_key, sender_f=None):
+    if sender_f is None:
+        sender_f = send_to_test
+
+    return _parse_game_response(sender_f(_join_request_dsl(player_key)))
+
+
+if False:
+    print(send_to_test(_countdown_request_dsl()))
+
+    print(_parse_create_response(send_dsl(_create_request_dsl(),
+                                          TEST_SERVER_URL, API_KEY)))
+
+    print(send_to_test(_countdown_request_dsl()))
+
+    print(send_create())
+
+    print(send_join(6046928247735128822))
+
+    print(send_join(1371299487238040913))

@@ -63,3 +63,20 @@ class TestModulate:
                                 0, 0])])
     def test_cons(self, val, bits):
         assert main.modulate(val) == bits
+
+
+class TestDSL:
+    @pytest.mark.parametrize('dsl', [None,
+                                     0,
+                                     1,
+                                     -1,
+                                     [None],
+                                     [0],
+                                     [1],
+                                     [-1],
+                                     [1, [2]],
+                                     [1, [2], [3]],
+                                     [1, [2, [3]]],
+                                     [[[1], 2], 3]])
+    def test_dsl_round_trip(self, dsl):
+        assert main.parse_response_body(main.make_request_body(dsl)) == dsl
