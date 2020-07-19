@@ -531,7 +531,7 @@ def main():
         our_position = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
 
     # TODO: use game_response and send commands
-    _log_info("There's nothing more here, exiting.")
+    _log_info("There's nothing more here, exciting.")
 
 
 if __name__ == '__main__':
