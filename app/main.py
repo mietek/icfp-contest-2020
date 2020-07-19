@@ -358,7 +358,7 @@ def _parse_static_game_info(info):
 
 def _parse_ship(ship):
     role, ship_id, position, velocity, x4, x5, x6, x7 = ship
-    return {'role': role,
+    return {'role': _parse_role(role),
             'ship_id': ship_id,
             'position': position,
             'velocity': velocity,
@@ -451,6 +451,11 @@ if False:
     print(send_join(1371299487238040913))
 
 
+def _extract_ship_ids(start_game_resp):
+    return {sh_cmd['ship']['role']: sh_cmd['ship']['id']
+            for sh_cmd in start_game_resp['game_state']['ships_and_commands']}
+
+
 def main():
     server_url = sys.argv[1]
     player_key = sys.argv[2]
@@ -479,8 +484,11 @@ def main():
                                  x2=0,
                                  x3=1,
                                  sender_f=sender_f)
+    ship_role_ids = _extract_ship_ids(start_game_resp)
     _log_info('started',
-              {'whole_game_resp': start_game_resp})
+              {'role_ids': ship_role_ids,
+               'our_ship_id': ship_role_ids.get(our_role),
+               'whole_game_resp': start_game_resp})
 
     # TODO: use game_response and send commands
     _log_info("There's nothing more here, exiting.")
