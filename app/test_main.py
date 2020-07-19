@@ -49,3 +49,17 @@ class TestModulate:
                               (-4, [1, 0, 1, 0, 0, 1, 0, 0])])
     def test_numbers(self, val, bits):
         assert main.modulate(val) == bits
+
+    @pytest.mark.parametrize('val,bits',
+                             [(main.Cons(None, None), [1, 1, 0, 0, 0, 0]),
+                              (main.Cons(1, 2), [1, 1,
+                                                 0, 1, 1, 0, 0, 0, 0, 1,
+                                                 0, 1, 1, 0, 0, 0, 1, 0]),
+                              (main.Cons(1, main.Cons(2, None)),
+                               [1, 1,
+                                0, 1, 1, 0, 0, 0, 0, 1,
+                                1, 1,
+                                0, 1, 1, 0, 0, 0, 1, 0,
+                                0, 0])])
+    def test_cons(self, val, bits):
+        assert main.modulate(val) == bits

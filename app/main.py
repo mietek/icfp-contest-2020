@@ -133,6 +133,7 @@ def _modulate_number(num) -> [bool]:
 def modulate(val: t.Union[int, Cons, None]) -> [bool]:
     if val is None:
         return [0, 0]
+
     elif isinstance(val, int):
         if val == 0:
             return [0, 1, 0]
@@ -140,7 +141,10 @@ def modulate(val: t.Union[int, Cons, None]) -> [bool]:
             return [0, 1] + _modulate_number(val)
         else:
             return [1, 0] + _modulate_number(val)
+
     elif isinstance(val, Cons):
-        pass
+        car, cdr = val
+        return [1, 1] + modulate(car) + modulate(cdr)
+
     else:
         raise ValueError(f"Can't modulate value {val} of type {type(val)}")
