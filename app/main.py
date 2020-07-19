@@ -589,7 +589,7 @@ def main():
         _log_info('commands sent',
                   {'whole_game_resp': cmd_resp})
 
-        our_position = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
+        our_position = _extract_ship_infos(cmd_resp)[our_ship_id]['ship']['position']
 
     # TODO: use game_response and send commands
     _log_info("There's nothing more here, exciting.")
