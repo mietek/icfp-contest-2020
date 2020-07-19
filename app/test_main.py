@@ -37,3 +37,15 @@ class TestDemodulateBits:
                                main.Cons(1, main.Cons(2, None)), [])])
     def test_neg_numbers(self, bits, val, rest_bits):
         assert main.demodulate_bits(bits) == (val, rest_bits)
+
+
+class TestModulate:
+    @pytest.mark.parametrize('val,bits',
+                             [(0, [0, 1, 0]),
+                              (1, [0, 1, 1, 0, 0, 0, 0, 1]),
+                              (2, [0, 1, 1, 0, 0, 0, 1, 0]),
+                              (15, [0, 1, 1, 0, 1, 1, 1, 1]),
+                              (17, [0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1]),
+                              (-4, [1, 0, 1, 0, 0, 1, 0, 0])])
+    def test_numbers(self, val, bits):
+        assert main.modulate(val) == bits

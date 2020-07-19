@@ -102,3 +102,45 @@ if False:
     print(_cons_tree_to_list(Cons(2, None)))
 
     print(_cons_tree_to_list(Cons(1, Cons(2, None))))
+
+
+def _bits_from_int(num):
+    return list(map(int, f'{num:b}'))
+
+
+def _binary_length(num):
+    return len(_bits_from_int(num))
+
+
+def _width_bits_length(num):
+    return math.ceil(_binary_length(num) / 4)
+
+
+def _modulate_number(num) -> [bool]:
+    '''Returns modulated bits for the number, without the initial 2 "type bits".
+    This allows using it for both positive and negative numbers.
+    '''
+    num = abs(num)
+    n_width_bits = _width_bits_length(num)
+    n_placeholder_bits = n_width_bits * 4 - _binary_length(num)
+
+    return ([1] * n_width_bits +
+            [0] +
+            [0] * n_placeholder_bits +
+            _bits_from_int(num))
+
+
+def modulate(val: t.Union[int, Cons, None]) -> [bool]:
+    if val is None:
+        return [0, 0]
+    elif isinstance(val, int):
+        if val == 0:
+            return [0, 1, 0]
+        elif val > 0:
+            return [0, 1] + _modulate_number(val)
+        else:
+            return [1, 0] + _modulate_number(val)
+    elif isinstance(val, Cons):
+        pass
+    else:
+        raise ValueError(f"Can't modulate value {val} of type {type(val)}")
