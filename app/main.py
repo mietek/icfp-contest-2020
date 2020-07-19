@@ -3,6 +3,7 @@ import math
 import itertools as itt
 import typing as t
 import collections as c
+import sys
 
 import requests
 
@@ -226,6 +227,10 @@ def _request_url(server_url, api_key=None):
         url
 
 
+def _log_info(msg):
+    print(msg, file=sys.stderr)
+
+
 def send_dsl(val: DSL, server_url, api_key=None):
     '''Send value encoded in the Python DSL, that is:
     `nil` is `None`
@@ -233,11 +238,16 @@ def send_dsl(val: DSL, server_url, api_key=None):
     `ap ap cons 42 nil` is [42]
     `ap ap cons 1 ap ap cons 2 nil` is `[1, 2]`
     '''
+    bit_str = make_request_body(val)
+    _log_info(f'Sending {val} encoded as {bit_str}')
     resp = requests.post(url=_request_url(server_url, api_key),
-                         data=make_request_body(val).encode())
+                         data=bit_str.encode())
     resp.raise_for_status()
 
-    return parse_response_body(resp.text)
+    resp_dsl = parse_response_body(resp.text)
+    _log_info(f'Response: {resp.status_code}, body: {resp.text}, dsl: {resp_dsl}')
+
+    return resp_dsl
 
 
 # For backwards compatibility
