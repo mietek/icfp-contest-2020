@@ -299,3 +299,60 @@ def _shoot_command_dsl(ship_id: int, target: DSLVector, x3):
     `x3` is unknown.
     '''
     return [2, ship_id, target, x3]
+
+
+def _parse_game_stage(game_stage: DSL):
+    if game_stage == 0:
+        return 'not_started_yet'
+    elif game_stage == 1:
+        return 'already_started'
+    elif game_stage == 2:
+        return 'finished'
+    else:
+        raise ValueError(f'Invalid game stage: {game_stage}')
+
+
+def _parse_role(role):
+    if role == 0:
+        return 'attacker'
+    elif role == 1:
+        return 'defender'
+    else:
+        raise ValueError(f'Invalid game role: {role}')
+
+
+def _parse_static_game_info(info):
+    x0, role, x2, x3, x4 = info
+    return {'role': _parse_role(role),
+            'x0': x0,
+            'x2': x2,
+            'x3': x3,
+            'x4': x4}
+
+
+def _parse_game_state(state):
+    game_tick, x1, ships_and_commands = state
+    return {'game_tick': game_tick,
+            'x1': x1,
+            'ships_and_commands': ships_and_commands}
+
+
+def _parse_game_response(game_resp: DSL):
+    if game_resp == [0]:
+        return {'success': False}
+    else:
+        success, game_stage, static_game_info, game_state = game_resp
+        assert success == 1, f'Invalid `success` in game response {game_resp}'
+
+        return {'success': success,
+                'game_stage': _parse_game_stage(game_stage),
+                'static_game_info': _parse_static_game_info(static_game_info),
+                'game_state': _parse_game_state(game_state)}
+
+
+TEST_SERVER_URL = 'https://icfpc2020-api.testkontur.ru'
+API_KEY = '69169703bf0e41f99bec6790ff8ec971'
+
+
+if False:
+    print(send_dsl([0], TEST_SERVER_URL, API_KEY))
