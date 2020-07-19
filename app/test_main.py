@@ -80,3 +80,18 @@ class TestDSL:
                                      [[[1], 2], 3]])
     def test_dsl_round_trip(self, dsl):
         assert main.parse_response_body(main.make_request_body(dsl)) == dsl
+
+
+@pytest.mark.parametrize('tree,dsl',
+                         [(main.Cons(0, None), [0]),
+                          (main.Cons(None, None), [None]),
+                          (main.Cons(main.Cons(1, None),
+                                     main.Cons(main.Cons(2, None),
+                                               None)),
+                           [[1],
+                            [2]]),
+                          (main.Cons(1, 2), [1, 2]), # the problematic response data
+                          (main.Cons(1, main.Cons(2, None)), [1, 2])
+                          ])
+def test_cons_tree_to_list(tree, dsl):
+    assert main.cons_tree_to_list(tree) == dsl

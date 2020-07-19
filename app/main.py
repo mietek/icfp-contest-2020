@@ -71,18 +71,6 @@ def demodulate_bits(bits: [bool]) -> t.Tuple[t.Union[int, Cons, None],
         raise ValueError(f'Invalid starting bits: {bits}')
 
 
-def _iter_cons_tree(cons_tree: Cons):
-    car, cdr = cons_tree
-
-    if isinstance(car, Cons):
-        yield list(_iter_cons_tree(car))
-    else:
-        yield car
-
-    if cdr is not None:
-        yield from _iter_cons_tree(cdr)
-
-
 # It's the notation we use for specifying transmittable data
 # without implementing the alien language AST terms:
 # `nil` is `None`
@@ -94,14 +82,30 @@ DSL = t.Union[None,
               t.List['DSL']]
 
 
-def _cons_tree_to_list(cons_tree) -> DSL:
-    return list(_iter_cons_tree(cons_tree))
+def _iter_cons_tree(tree: Cons):
+    if isinstance(tree, Cons):
+        car, cdr = tree
+
+        if isinstance(car, Cons):
+            yield list(_iter_cons_tree(car))
+        else:
+            yield car
+
+        if cdr is not None:
+            yield from _iter_cons_tree(cdr)
+
+    else:
+        yield tree
+
+
+def cons_tree_to_list(tree) -> DSL:
+    return list(_iter_cons_tree(tree))
 
 
 if False:
-    print(_cons_tree_to_list(Cons(2, None)))
+    print(cons_tree_to_list(Cons(2, None)))
 
-    print(_cons_tree_to_list(Cons(1, Cons(2, None))))
+    print(cons_tree_to_list(Cons(1, Cons(2, None))))
 
 
 def _bits_from_int(num):
@@ -182,7 +186,7 @@ def parse_response_body(body: str) -> DSL:
     assert set(bits).issubset({0, 1}), f'Invalid characters in {body}'
     demodulated, _ = demodulate_bits(bits)
     if isinstance(demodulated, Cons):
-        return _cons_tree_to_list(demodulated)
+        return cons_tree_to_list(demodulated)
     else:
         return demodulated
 
