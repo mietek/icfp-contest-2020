@@ -461,6 +461,41 @@ def _extract_ship_ids(start_game_resp):
     return {sh_cmd['ship']['role']: sh_cmd['ship']['ship_id']
             for sh_cmd in start_game_resp['game_state']['ships_and_commands']}
 
+def _calculate_gravity(position):
+    [x,y] = position
+    if abs(x) > abs(y):
+        if x > 0:
+            return [1, 0]
+        elif x < 0:
+            return [-1, 0]
+        else:
+            return [0, 0]
+    else:
+        if y > 0:
+            return [0, 1]
+        elif y < 0:
+            return [0, -1]
+        else:
+            return [0, 0]
+
+def _predicted_position(ship_and_command):
+    '''To predict the next position of the ship, we need:
+    current position, current velocity, gravity force
+    and a previous command (especially how it accelerates)
+    Then it's actually quite simple!
+    '''
+    ship, cmds = ship_and_command
+    role, ship_id, position, velocity, x4, x5, x6, x7 = ship
+    [current_x, current_y] = position
+    [vel_x, vel_y] = velocity
+    [g_x, g_y] = _calculate_gravity(position)
+    # parsing commands to extract the current thrust left for later
+    new_vel_x = vel_x + g_x
+    new_vel_y = vel_y + g_y
+    next_x = current_x - new_vel_x
+    next_y = current_y - new_vel_y
+    return [next_y, next_y]
+
 
 def _extract_ship_infos(game_resp) -> {int, dict}:
     '''Dict with ship_id as key, "ship_and_command" as value.'''
