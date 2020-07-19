@@ -151,6 +151,26 @@ function main() {
   handleInput(stdEnv, 'cb3 = ap ap checkerboard 9 4');
   handleInput(stdEnv, 'cbs = ap ap cons cb1 ap ap cons cb2 ap ap cons cb3 nil');
   handleInput(stdEnv, 'showmethemagic = ap multipledraw cbs'); // who doesn't like easter eggs
+  handleInput(stdEnv, 'statelessdraw = ap ap c ap ap b b ap ap b ap b ap cons 0 ap ap c ap ap b b cons ap ap c cons nil ap ap c ap ap b cons ap ap c cons nil nil');
+  stdEnv.map.set(
+    'f38',
+    FunctionTerm('x2',
+      FunctionTerm('x0',
+        parseInput('ap ap ap if0 ap car x0 ( ap modem ap car ap cdr x0 , ap multipledraw ap car ap cdr ap cdr x0 ) ap ap ap interact x2 ap modem ap car ap cdr x0 ap send ap car ap cdr ap cdr x0')
+      ),
+    ),
+  );
+  stdEnv.map.set(
+    'interact',
+    FunctionTerm('x2',
+      FunctionTerm('x4',
+        FunctionTerm('x3',
+          parseInput('ap ap f38 x2 ap ap x2 x4 x3')
+        ),
+      ),
+    ),
+  );
+
   document.getElementById('input').addEventListener('keydown', function(event) {
     handleKeyDown(stdEnv, event);
   });

@@ -1013,8 +1013,8 @@ function readTerm(tokens) {
       return Pair(If0Term, moreTokens);
 
     // TODO: Implement send
-    case 'send':
-      throw new Error('‘send’ is unimplemented');
+    // case 'send':
+    //   throw new Error('‘send’ is unimplemented');
 
     case 'neg':
       return Pair(NegTerm, moreTokens);
@@ -1066,9 +1066,6 @@ function readTerm(tokens) {
 
     // TODO: Implement interact...
     // case 'checkerboard':
-
-    case 'interact':
-      throw new Error('‘interact’ is unimplemented');
 
     default:
       return returnSymOrReadAssignment(SymTerm(headToken), moreTokens);
