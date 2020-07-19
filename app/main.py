@@ -78,9 +78,11 @@ def demodulate_bits(bits: [bool]) -> t.Tuple[t.Union[int, Cons, None],
 # `42` is 42
 # `ap ap cons 42 nil` is [42]
 # `ap ap cons 1 ap ap cons 2 nil` is `[1, 2]`
+# `ap ap cons 1 2` is `Cons(1, 2)`
 DSL = t.Union[None,
               int,
-              t.List['DSL']]
+              t.List['DSL'],
+              Cons]
 
 
 def _iter_cons_tree(tree: Cons):
@@ -166,6 +168,11 @@ def _make_cons_tree(val: DSL):
         head, *rest = val
         return Cons(_make_cons_tree(head), _make_cons_tree(rest))
 
+    elif isinstance(val, Cons):
+        car, cdr = val
+        return Cons(_make_cons_tree(car),
+                    _make_cons_tree(cdr))
+
     else:
         raise ValueError(f"Can't transform {val} of type {type(val)} to cons tree")
 
@@ -175,6 +182,8 @@ if False:
     print(_make_cons_tree([0]))
     print(_make_cons_tree(None))
     print(_make_cons_tree([None]))
+
+    print(modulate(Cons(1, 2)))
 
 
 def make_request_body(val: DSL) -> str:
@@ -439,16 +448,11 @@ def send_commands(player_key, commands, sender_f=None):
 if False:
     print(send_to_test(_countdown_request_dsl()))
 
-    print(_parse_create_response(send_dsl(_create_request_dsl(),
-                                          TEST_SERVER_URL, API_KEY)))
-
-    print(send_to_test(_countdown_request_dsl()))
-
-    print(send_create())
-
     print(send_join(6046928247735128822))
 
-    print(send_join(1371299487238040913))
+    print(make_request_body([0, 1, Cons(-1, -1)]))
+    print(parse_response_body('1101011011000011111101000011010000100'))
+
 
 
 def _extract_ship_ids(start_game_resp):
