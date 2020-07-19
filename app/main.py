@@ -474,6 +474,25 @@ def _extract_ship_infos(game_resp) -> {int, dict}:
 MAX_N_ROUNDS = 256
 
 
+def _clamp(num, clipping_abs_val):
+    return max(-clipping_abs_val, min(num, clipping_abs_val))
+
+
+def _make_acc_vector(x, y):
+    return Cons(_clamp(x, 1),
+                _clamp(y, 1))
+
+
+if False:
+    print(_clamp(42, 1))
+    print(_clamp(0, 1))
+    print(_clamp(-42, 1))
+
+    print(_make_acc_vector(42, 8))
+
+    print(_make_acc_vector(-42, 0))
+
+
 def main():
     server_url = sys.argv[1]
     player_key = sys.argv[2]
@@ -518,8 +537,8 @@ def main():
 
     for round_i in range(MAX_N_ROUNDS):
         cmds = [_accelerate_command_dsl(our_ship_id,
-                                        Cons(-our_position[0],
-                                             -our_position[1]))]
+                                        _make_acc_vector(-our_position[0],
+                                                         -our_position[1]))]
         _log_info('sending commands',
                   {'cmds': cmds,
                    'our_position_before': our_position})
