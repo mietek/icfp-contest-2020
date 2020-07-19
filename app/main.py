@@ -148,3 +148,28 @@ def modulate(val: t.Union[int, Cons, None]) -> [bool]:
 
     else:
         raise ValueError(f"Can't modulate value {val} of type {type(val)}")
+
+
+def _list_to_cons_tree(l):
+    if len(l) == 0:
+        return None
+    else:
+        head, *rest = l
+        return Cons(head, _list_to_cons_tree(rest))
+
+
+def _make_request_body(val: t.Union[int, list, None]) -> str:
+    try:
+        val = _list_to_cons_tree(val)
+    except TypeError:
+        pass
+    bits = modulate(val)
+    return ''.join(map(str, bits))
+
+
+if False:
+    print(_make_request_body([1]))
+
+    print(_make_request_body(1))
+
+    print(_make_request_body([0]))
