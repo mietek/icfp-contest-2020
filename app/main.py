@@ -497,17 +497,17 @@ def _calculate_gravity(position):
         else:
             return [0, 0]
 
-def _predicted_position(ship_and_command):
+def _predicted_position(ship_and_commands):
     '''To predict the next position of the ship, we need:
     current position, current velocity, gravity force
     and a previous command (especially how it accelerates)
     Then it's actually quite simple!
     '''
-    ship, cmds = ship_and_command
-    role, ship_id, position, velocity, x4, x5, x6, x7 = ship
-    [current_x, current_y] = position
-    [vel_x, vel_y] = velocity
-    [g_x, g_y] = _calculate_gravity(position)
+    ship = ship_and_commands['ship']
+    # commands = ship_and_commands['applied_commands']
+    [current_x, current_y] = ship['position']
+    [vel_x, vel_y] = ship['velocity']
+    [g_x, g_y] = _calculate_gravity(ship['position'])
     # parsing commands to extract the current thrust left for later
     new_vel_x = vel_x + g_x
     new_vel_y = vel_y + g_y
