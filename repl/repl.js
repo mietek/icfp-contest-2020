@@ -938,7 +938,28 @@ var DemTerm = {
 // TODO
 
 // #37. Is 0
-// TODO
+var If0Term = {
+  tag: 'If0Term',
+  eval: function (env) {
+    return this;
+  },
+  apply: function (env, arg1) {
+    return PartialFunctionTerm(function (arg2) {
+      return PartialFunctionTerm(function (arg3) {
+        const val = arg1.eval(env);
+        if (val.tag === 'NumTerm' && val.num === 0) {
+          return arg2;
+        } else {
+          return arg3;
+        }
+      });
+    });
+  },
+  print: function () {
+    return 'if0';
+  },
+};
+
 
 // #38. Interact
 // TODO
@@ -988,6 +1009,8 @@ function readTerm(tokens) {
       return Pair(DemTerm, moreTokens);
     case 'modem':
       return Pair(ModemTerm, moreTokens);
+    case 'if0':
+      return Pair(If0Term, moreTokens);
 
     // TODO: Implement send
     case 'send':
@@ -1041,11 +1064,9 @@ function readTerm(tokens) {
     case 'multipledraw':
       return Pair(MultiDrawTerm, moreTokens);
 
-    // TODO: Implement if0, interact...
+    // TODO: Implement interact...
     // case 'checkerboard':
 
-    case 'if0':
-      throw new Error('‘if0’ is unimplemented');
     case 'interact':
       throw new Error('‘interact’ is unimplemented');
 
@@ -2002,7 +2023,7 @@ assertRight('ap isnil nil', 't');
 assertRight('ap isnil ap ap cons 0 1', 'f');
 // assertRight('()', 'nil');
 assertRight('vec', 'cons');
-// assertRight('if0', 'if0');
+assertRight('if0', 'if0');
 
 // modem
 assertEvalTerm('modem', ModemTerm);
@@ -2025,3 +2046,6 @@ assertEvalThrows(
   'ap dem ap add 1',
   /Type error: ‘dem’ needs a modulated signal argument/
 );
+
+assertEvalTerm('ap ap ap if0 0 1 2', NumTerm(1));
+assertEvalTerm('ap ap ap if0 1 1 2', NumTerm(2));
