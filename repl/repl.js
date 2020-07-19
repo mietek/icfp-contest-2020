@@ -35,13 +35,6 @@ function Right(right) {
   };
 }
 
-function Env() {
-  return {
-    tag: 'Env',
-    map: new Map(),
-  };
-}
-
 //////////////////////////////////////////////////////////////////////////////
 
 // #1, #2, #3. Numbers and negative numbers
@@ -63,6 +56,13 @@ NumTerm.prototype.print = function () {
 
 // #4. Equality
 // TODO: Actually, “equality” is symbol binding, and so, needs symbols and envs
+
+function Env() {
+  return {
+    tag: 'Env',
+    map: new Map(),
+  };
+}
 
 function SymTerm(sym) {
   if (!(this instanceof SymTerm)) {
@@ -300,6 +300,29 @@ var NegTerm = {
 };
 
 // #17. Function Application
+function FunctionTerm(argName, term) {
+  if (!(this instanceof FunctionTerm)) {
+    return new FunctionTerm(argName, term);
+  }
+  return Object.assign(this, {
+    tag: 'FunctionTerm',
+    argName,
+    term,
+  });
+}
+FunctionTerm.prototype.eval = function (env) {
+  return this;
+};
+FunctionTerm.prototype.apply = function (env, arg) {
+  const newEnv = Env();
+  newEnv.map = new Map(env.map);
+  newEnv.map.set(this.argName, arg);
+  return this.term.eval(newEnv);
+};
+FunctionTerm.prototype.print = function () {
+  return `λ${this.argName} . ${this.term.print()}`;
+};
+
 // PartialFunctionTerm represents a partially applied function. Partial
 // functions are not created when parsing the input, but they can appear during
 // evaluation.
@@ -1252,6 +1275,38 @@ if (typeof window === 'undefined') {
   //   () => ApTerm(NumTerm(37), NumTerm(42)).eval(Env()),
   //   /Cannot perform application on term: ‘NumTerm’/
   // );
+}
+
+// test FunctionTerm
+if (typeof window === 'undefined') {
+  const assert = require('assert');
+  const env = Env();
+  const idFunTerm = FunctionTerm('x', SymTerm('x'));
+  assert.deepEqual(
+    idFunTerm.print(),
+    'λx . x',
+  );
+  // test evaluating a function
+  assert.deepEqual(
+    ApTerm(idFunTerm, NumTerm(1)).eval(env),
+    NumTerm(1),
+  );
+  // test shadowing variables
+  env.map.set('x', NumTerm(23));
+  assert.deepEqual(
+    ApTerm(idFunTerm, NumTerm(1)).eval(env),
+    NumTerm(1),
+  );
+  // test function with a free variable
+  const freeFunTerm = FunctionTerm('y', SymTerm('x'));
+  assert.deepEqual(
+    freeFunTerm.print(),
+    'λy . x',
+  );
+  assert.deepEqual(
+    ApTerm(freeFunTerm, NumTerm(1)).eval(env),
+    NumTerm(23),
+  );
 }
 
 if (typeof window === 'undefined') {
