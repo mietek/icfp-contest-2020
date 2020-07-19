@@ -356,6 +356,24 @@ def _parse_static_game_info(info):
             'x4': x4}
 
 
+def _parse_ship(ship):
+    role, ship_id, position, velocity, x4, x5, x6, x7 = ship
+    return {'role': role,
+            'ship_id': ship_id,
+            'position': position,
+            'velocity': velocity,
+            'x4': x4,
+            'x5': x5,
+            'x6': x6,
+            'x7': x7}
+
+
+def _parse_ship_and_command(ship_and_command):
+    ship, cmds = ship_and_command
+    return {'ship': _parse_ship(ship),
+            'applied_commands': cmds}
+
+
 def _parse_game_state(state):
     if state is None:
         return None
@@ -363,7 +381,8 @@ def _parse_game_state(state):
     game_tick, x1, ships_and_commands = state
     return {'game_tick': game_tick,
             'x1': x1,
-            'ships_and_commands': ships_and_commands}
+            'ships_and_commands': [_parse_ship_and_command(sh_cmd)
+                                   for sh_cmd in (ships_and_commands or [])]}
 
 
 def _parse_game_response(game_resp: DSL):
