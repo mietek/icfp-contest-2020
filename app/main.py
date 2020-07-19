@@ -505,16 +505,12 @@ def main():
 
     for desc, commands in [('empty commands #1', []),
                            ('empty commands #2', []),
-                           ('acceleration according to docs', [[0, our_ship_id, [-1, -1]]]),
-                           ('acceleration without ship id', [[0, [-1, -1]]]),
-                           ('acceleration with flat coords', [[0, our_ship_id, -1, -1]]),
-                           ('acceleration without ship id with flat coords', [[0, -1, -1]]),
-                           ('shoot according to docs #1', [[2, our_ship_id, [42, 42], 1]]),
-                           ('shoot according to docs #2', [[2, our_ship_id, [42, 42], None]]),
-                           ('shoot according with flat coords #1', [[2, our_ship_id, [42, 42], 1]]),
-                           ('shoot according with flat coords #2', [[2, our_ship_id, [42, 42], None]]),
-                           ('detonate', [[1, our_ship_id]]),
-                           ('detonate without ship id', [[1]])]:
+                           ('acceleration with vector #1', [[0, our_ship_id, Cons(-1, -1)]]),
+                           ('acceleration with vector #2', [[0, our_ship_id, Cons(-1, -1)]]),
+                           ('acceleration with linked list', [[0, our_ship_id, [-1, -1]]]),
+                           ('shoot with vector', [[2, our_ship_id, Cons(42, 42), 1]]),
+                           ('shoot with vector, with nil', [[2, our_ship_id, Cons(42, 42), None]]),
+                           ('shoot with linked list', [[2, our_ship_id, [42, 42], 1]])]:
         _log_info('sending hardcoded commands',
                   {'commands': commands,
                    'description': desc})
