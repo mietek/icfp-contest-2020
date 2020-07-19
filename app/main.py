@@ -402,6 +402,22 @@ def send_join(player_key, sender_f=None):
     return _parse_game_response(sender_f(_join_request_dsl(player_key)))
 
 
+def send_start(player_key, x0, x1, x2, x3, sender_f=None):
+    # NOTE(Alex): I couldn't verify if this works yet because our requests hang up.
+    if sender_f is None:
+        sender_f = send_to_test
+
+    return _parse_game_response(sender_f(_start_request_dsl(player_key, x0, x1, x2, x3)))
+
+
+def send_commands(player_key, commands, sender_f=None):
+    # NOTE(Alex): I couldn't verify if this works yet because our requests hang up.
+    if sender_f is None:
+        sender_f = send_to_test
+
+    return _parse_game_response(sender_f(_commands_request_dsl(player_key, commands)))
+
+
 if False:
     print(send_to_test(_countdown_request_dsl()))
 
