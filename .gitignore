@@ -2,7 +2,6 @@
 .vscode
 __pycache__/
 *.py[cod]
-Dockerfile
 
 # python virtualenv
 venv
