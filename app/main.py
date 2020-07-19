@@ -5,6 +5,7 @@ import typing as t
 import collections as c
 import sys
 import functools as fnt
+import pprint
 
 import requests
 
@@ -214,8 +215,10 @@ def _request_url(server_url, api_key=None):
         return url
 
 
-def _log_info(msg):
+def _log_info(msg, data=None):
     print(msg)
+    if data is not None:
+        pprint.pp(data)
 
 
 def send_dsl(val: DSL, server_url, api_key=None):
@@ -226,14 +229,19 @@ def send_dsl(val: DSL, server_url, api_key=None):
     `ap ap cons 1 ap ap cons 2 nil` is `[1, 2]`
     '''
     bit_str = make_request_body(val)
-    _log_info(f'Sending {val} encoded as {bit_str}')
+    _log_info('sending request',
+              {'dsl': val,
+               'bit_str': bit_str})
     resp = requests.post(url=_request_url(server_url, api_key),
                          data=bit_str.encode())
     resp.raise_for_status()
-    _log_info(f'Response code: {resp.status_code}, body: {resp.text}')
+    _log_info('response received',
+              {'status_code': resp.status_code,
+               'body': resp.text})
 
     resp_dsl = parse_response_body(resp.text)
-    _log_info(f'Response dsl: {resp_dsl}')
+    _log_info('response parsed',
+              {'dsl': resp_dsl})
 
     return resp_dsl
 
@@ -427,29 +435,36 @@ if False:
 def main():
     server_url = sys.argv[1]
     player_key = sys.argv[2]
-    print(f'server_url = {server_url}, player_key = {player_key}')
+    _log_info('booted',
+              {'server_url': server_url,
+               'player_key': player_key})
 
     player_key = int(player_key)
 
     sender_f = fnt.partial(send_dsl, server_url=server_url, api_key=None)
 
-    print(f'Joining as {player_key}')
+    _log_info('joining',
+              {'player_key': player_key})
+
     join_game_resp = send_join(player_key,
                                sender_f=sender_f)
     our_role = join_game_resp.get('static_game_info', {}).get('role')
-    print(f'Joinining as {our_role}, whole game resp = {join_game_resp}')
+    _log_info('joined',
+              {'our_role': our_role,
+               'whole_game_resp': join_game_resp})
 
-    print(f'Starting with arbitrary ship parameters')
+    _log_info('starting with arbitrary ship parameters')
     start_game_resp = send_start(player_key,
                                  x0=42,
                                  x1=0,
                                  x2=0,
                                  x3=1,
                                  sender_f=sender_f)
-    print(f'Start game resp = {start_game_resp}')
+    _log_info('started',
+              {'whole_game_resp': start_game_resp})
 
     # TODO: use game_response and send commands
-    print("There's nothing more here, exiting.")
+    _log_info("There's nothing more here, exiting.")
 
 
 if __name__ == '__main__':
