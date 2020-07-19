@@ -1,3 +1,3 @@
 #!/bin/sh
 
-stack install --allow-different-user
+pip install -r requirements.txt
