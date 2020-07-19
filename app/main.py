@@ -150,20 +150,30 @@ def modulate(val: t.Union[int, Cons, None]) -> [bool]:
         raise ValueError(f"Can't modulate value {val} of type {type(val)}")
 
 
-def _list_to_cons_tree(l):
-    if len(l) == 0:
+def _make_cons_tree(val):
+    if val is None or val == []:
         return None
+
+    elif isinstance(val, int):
+        return val
+
+    elif isinstance(val, list):
+        head, *rest = val
+        return Cons(_make_cons_tree(head), _make_cons_tree(rest))
+
     else:
-        head, *rest = l
-        return Cons(head, _list_to_cons_tree(rest))
+        raise ValueError("Can't transform {head} of type {type(head)} to cons tree")
+
+
+if False:
+    print(_make_cons_tree(0))
+    print(_make_cons_tree([0]))
+    print(_make_cons_tree(None))
+    print(_make_cons_tree([None]))
 
 
 def make_request_body(val: t.Union[int, list, None]) -> str:
-    try:
-        val = _list_to_cons_tree(val)
-    except TypeError:
-        pass
-    bits = modulate(val)
+    bits = modulate(_make_cons_tree(val))
     return ''.join(map(str, bits))
 
 
@@ -211,3 +221,5 @@ def send_val(val, server_url, api_key=None):
 if False:
     # __api_key = '<PUT API KEY HERE>'
     print(send_val([0], 'https://icfpc2020-api.testkontur.ru', __api_key))
+    print(send_val([1], 'https://icfpc2020-api.testkontur.ru', __api_key))
+    print(send_val([1, None, None], 'https://icfpc2020-api.testkontur.ru', __api_key))
