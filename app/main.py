@@ -1,6 +1,7 @@
 import sys
 import math
 import itertools as itt
+import typing as t
 
 import requests
 
@@ -37,25 +38,29 @@ def _int_from_bits(bits: [bool]):
     return int(''.join(str(b) for b in bits), 2)
 
 
-def _slice_with_fill(seq, fill, start, length):
+def _slice_with_fill(seq, fill, start, end):
     filled = itt.chain(seq, itt.repeat(fill))
-    return itt.islice(filled, start, length)
+    return itt.islice(filled, start, end)
 
 
-def _demodulate_bits(bits: [bool]):
+def demodulate_bits(bits: [bool]) -> t.Tuple[t.Union[int, list],
+                                              t.List[bool]]:
     if bits[:2] == [1, 1]:
         # cons cell
         pass
+
     elif bits[:2] == [0, 1]:
         # positive number
         width_bits = list(_subsequent_ones(bits[2:]))
         n_width_bits = len(width_bits)
         n_number_bits = 4 * n_width_bits
+        end_bit_index = 2 + n_width_bits + 1 + n_number_bits
         number_bits = list(_slice_with_fill(bits,
                                             0,
                                             2 + n_width_bits + 1,
-                                            2 + n_width_bits + 1 + n_number_bits))
-        return _int_from_bits(number_bits)
+                                            end_bit_index))
+        return _int_from_bits(number_bits), bits[end_bit_index:]
+
     elif bits[:2] == [1, 0]:
         # negative number
         pass
@@ -64,13 +69,13 @@ def _demodulate_bits(bits: [bool]):
 
 
 if False:
-    print(_demodulate_bits([0, 1, 0]))
+    print(demodulate_bits([0, 1, 0]))
 
-    print(_demodulate_bits([0, 1, 1, 0, 0, 0, 0, 1]))
-    print(_demodulate_bits([0, 1, 1, 0, 0, 0, 0, 1, 0]))
+    print(demodulate_bits([0, 1, 1, 0, 0, 0, 0, 1]))
+    print(demodulate_bits([0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1]))
 
-    print(_demodulate_bits([0, 1, 1, 0, 1, 1, 1, 0]))
-    print(_demodulate_bits([0, 1, 1, 0, 1, 1, 1]))
-    print(_demodulate_bits([0, 1, 1, 0, 1, 1, 1, 0, 0]))
+    print(demodulate_bits([0, 1, 1, 0, 1, 1, 1, 0]))
+    print(demodulate_bits([0, 1, 1, 0, 1, 1, 1]))
+    print(demodulate_bits([0, 1, 1, 0, 1, 1, 1, 0, 0]))
 
     print(list(_subsequent_ones([1, 0, 1])))
