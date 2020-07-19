@@ -1005,18 +1005,15 @@ function readTerm(tokens) {
 
     // TODO: Fix lists
     case '(':
-      throw new Error('‘(’ is unimplemented');
-      //return readTermInParens(moreTokens);
+      return readList(moreTokens)
     case ')':
-      throw new Error('‘)’ is unimplemented');
     case ',':
-      throw new Error('‘,’ is unimplemented');
+      throw new Error('Unexpected token: ‘' + tokens[0] + '’');
 
     case 'vec':
       return Pair(ConsTerm, moreTokens);
     case 'draw':
       return Pair(DrawTerm, moreTokens);
-
 
     case 'multipledraw':
       return Pair(MultiDrawTerm, moreTokens);
@@ -1036,14 +1033,22 @@ function readTerm(tokens) {
   }
 }
 
-// readUnaryOp : String -> (Term -> Term) -> Array String -> Pair Term (Array String)
-// TODO: Delete this
-function readUnaryOp(opName, opConstructor, tokens) {
-  if (tokens.length < 1) {
-    throw new Error('Syntax error: ‘' + opName + '’ needs one argument');
+// readList : Array String -> Pair Term (Array String)
+function readList(tokens) {
+  if (tokens[0] === ')') {
+    return Pair(NilTerm, tokens.slice(1));
   }
-  var result = readTerm(tokens);
-  return Pair(opConstructor(result.fst), result.snd);
+  const headResult = readTerm(tokens);
+  const headTerm = headResult.fst;
+  let moreTokens = headResult.snd;
+  if (moreTokens[0] === ',') {
+    moreTokens = moreTokens.slice(1);
+  }
+  const tailResult = readList(moreTokens);
+  const tailTerm = tailResult.fst;
+  const remainingTokens = tailResult.snd;
+  const listTerm = PairTerm(headTerm, tailTerm);
+  return Pair(listTerm, remainingTokens);
 }
 
 // readBinaryOp : String -> (Term -> Term -> Term) -> Array String -> Pair Term (Array String)
@@ -1787,6 +1792,36 @@ if (typeof window === 'undefined') {
   //     [],
   //   )
   // );
+
+  // list construction syntax
+  assert.deepEqual(
+    readTerm(tokenizeInput('( )')),
+    Pair(NilTerm, []),
+  );
+  assert.deepEqual(
+    readTerm(tokenizeInput('( x0 )')),
+    Pair(PairTerm(SymTerm('x0'), NilTerm), []),
+  );
+  assert.deepEqual(
+    readTerm(tokenizeInput('( x0 , )')),
+    Pair(PairTerm(SymTerm('x0'), NilTerm), []),
+  );
+  assert.deepEqual(
+    readTerm(tokenizeInput('( x0 , x1 )')),
+    Pair(
+      PairTerm(SymTerm('x0'), PairTerm(SymTerm('x1'), NilTerm)),
+      [],
+    ),
+  );
+  assert.throws(
+    () => readTerm(tokenizeInput('( x0 , , )')),
+    /Unexpected token: ‘,’/
+  );
+  // TODO throw an error if the comma is missing
+  // assert.throws(
+  //   () => readTerm(tokenizeInput('( x0 x1 )')),
+  //   /Expected a ‘,’ or ‘\)’/
+  // );
 }
 
 // String-to-string tests based on documentation
@@ -1914,6 +1949,7 @@ assertRight('ap isnil ap ap cons 0 1', 'f');
 assertRight('vec', 'cons');
 // assertRight('if0', 'if0');
 
+// modem
 assertEvalTerm('modem', ModemTerm);
 assertEvalTerm('ap modem 1', NumTerm(1));
 assertEvalTerm('ap modem ap ap cons 1 nil', PairTerm(NumTerm(1), NilTerm));
@@ -1922,6 +1958,7 @@ assertEvalThrows(
   /modulateTerm cannot accept term of type: PartialFunctionTerm/,
 );
 
+// dem
 assertEvalTerm('dem', DemTerm);
 assertEvalTerm('ap dem ap mod 0', NumTerm(0));
 assertEvalTerm('ap dem ap mod 1', NumTerm(1));
