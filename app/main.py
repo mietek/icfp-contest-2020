@@ -43,6 +43,21 @@ def _slice_with_fill(seq, fill, start, end):
     return itt.islice(filled, start, end)
 
 
+def _demodulate_number(bits):
+    '''Demodulate bits knowing that it's a positive or negative number, not a list.
+    Uses `bits` without two initial "type bits".
+    '''
+    width_bits = list(_subsequent_ones(bits))
+    n_width_bits = len(width_bits)
+    n_number_bits = 4 * n_width_bits
+    end_bit_index = n_width_bits + 1 + n_number_bits
+    number_bits = list(_slice_with_fill(bits,
+                                        0,
+                                        n_width_bits + 1,
+                                        end_bit_index))
+    return _int_from_bits(number_bits), bits[end_bit_index:]
+
+
 def demodulate_bits(bits: [bool]) -> t.Tuple[t.Union[int, list],
                                               t.List[bool]]:
     if bits[:2] == [1, 1]:
@@ -51,19 +66,13 @@ def demodulate_bits(bits: [bool]) -> t.Tuple[t.Union[int, list],
 
     elif bits[:2] == [0, 1]:
         # positive number
-        width_bits = list(_subsequent_ones(bits[2:]))
-        n_width_bits = len(width_bits)
-        n_number_bits = 4 * n_width_bits
-        end_bit_index = 2 + n_width_bits + 1 + n_number_bits
-        number_bits = list(_slice_with_fill(bits,
-                                            0,
-                                            2 + n_width_bits + 1,
-                                            end_bit_index))
-        return _int_from_bits(number_bits), bits[end_bit_index:]
+        return _demodulate_number(bits[2:])
 
     elif bits[:2] == [1, 0]:
         # negative number
-        pass
+        num, rest_bits = _demodulate_number(bits[2:])
+        return -num, rest_bits
+
     else:
         raise ValueError(f'Invalid starting bits: {bits}')
 
