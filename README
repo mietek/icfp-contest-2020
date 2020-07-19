@@ -15,6 +15,7 @@ Run tests with `python -m pytest .'`
 Using modulator/demodulator via Python REPL:
 
 ```
+python # make sure you've activated the venv with "source venv/bin/activate"
 >>> import app.main
 >>> app.main.make_request_body([0])
 '1101000'
