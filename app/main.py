@@ -528,6 +528,28 @@ def _extract_ship_infos(game_resp) -> {int, dict}:
 MAX_N_ROUNDS = 256
 
 
+def _clamp(num, clipping_abs_val):
+    return max(-clipping_abs_val, min(num, clipping_abs_val))
+
+
+def _make_acc_vector(x, y):
+    return Cons(_clamp(x, 1),
+                _clamp(y, 1))
+
+
+if False:
+    print(_clamp(42, 1))
+    print(_clamp(0, 1))
+    print(_clamp(-42, 1))
+
+    print(_make_acc_vector(42, 8))
+
+    print(_make_acc_vector(-42, 0))
+
+
+PLANET_SIDE_LENGTH = 36
+
+
 def main():
     server_url = sys.argv[1]
     player_key = sys.argv[2]
@@ -571,15 +593,22 @@ def main():
     our_position = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
     their_ship = _extract_ship_infos(start_game_resp)[enemy_ship_id]
     for round_i in range(MAX_N_ROUNDS):
+
         shooting_coords = _predicted_position(their_ship)
         shoot_cmd = _shoot_command_dsl(enemy_ship_id,
                                        Cons(shooting_coords[0],
                                             shooting_coords[1]),
                                        None)
-        cmds = [_accelerate_command_dsl(our_ship_id,
-                                        Cons(-our_position[0],
-                                             -our_position[1])),
-                shoot_cmd]
+
+        if math.hypot(*our_position) < 2 * PLANET_SIDE_LENGTH:
+            cmds = [_accelerate_command_dsl(our_ship_id,
+                                            _make_acc_vector(-our_position[0],
+                                                             -our_position[1])),
+                    shoot_cmd]
+        else:
+            cmds = []
+
+
         _log_info('sending commands',
                   {'cmds': cmds,
                    'our_position_before': our_position})
@@ -588,8 +617,9 @@ def main():
         _log_info('commands sent',
                   {'whole_game_resp': cmd_resp})
 
-        our_position = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
-        their_ship = _extract_ship_infos(start_game_resp)[enemy_ship_id]
+
+        our_position = _extract_ship_infos(cmd_resp)[our_ship_id]['ship']['position']
+        their_ship = _extract_ship_infos(cmd_resp)[enemy_ship_id]
 
     # TODO: use game_response and send commands
     _log_info("There's nothing more here, exciting.")
