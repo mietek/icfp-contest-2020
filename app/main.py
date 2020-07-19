@@ -87,14 +87,18 @@ def demodulate_bits(bits: [bool]) -> t.Tuple[t.Union[int, Cons, None],
         raise ValueError(f'Invalid starting bits: {bits}')
 
 
+def _iter_cons_tree(cons_tree):
+    car, cdr = cons_tree
+    yield car
+    if cdr is not None:
+        yield from _iter_cons_tree(cdr)
+
+
+def _cons_tree_to_list(cons_tree):
+    return list(_iter_cons_tree(cons_tree))
+
+
 if False:
-    print(demodulate_bits([0, 1, 0]))
+    print(_cons_tree_to_list(Cons(2, None)))
 
-    print(demodulate_bits([0, 1, 1, 0, 0, 0, 0, 1]))
-    print(demodulate_bits([0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1]))
-
-    print(demodulate_bits([0, 1, 1, 0, 1, 1, 1, 0]))
-    print(demodulate_bits([0, 1, 1, 0, 1, 1, 1]))
-    print(demodulate_bits([0, 1, 1, 0, 1, 1, 1, 0, 0]))
-
-    print(list(_subsequent_ones([1, 0, 1])))
+    print(_cons_tree_to_list(Cons(1, Cons(2, None))))
