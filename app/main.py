@@ -452,7 +452,10 @@ if False:
 
 
 def _extract_ship_ids(start_game_resp):
-    return {sh_cmd['ship']['role']: sh_cmd['ship']['id']
+    if start_game_resp.get('game_state') is None:
+        return {}
+
+    return {sh_cmd['ship']['role']: sh_cmd['ship']['ship_id']
             for sh_cmd in start_game_resp['game_state']['ships_and_commands']}
 
 
