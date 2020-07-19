@@ -87,14 +87,30 @@ def demodulate_bits(bits: [bool]) -> t.Tuple[t.Union[int, Cons, None],
         raise ValueError(f'Invalid starting bits: {bits}')
 
 
-def _iter_cons_tree(cons_tree):
+def _iter_cons_tree(cons_tree: Cons):
     car, cdr = cons_tree
-    yield car
+
+    if isinstance(car, Cons):
+        yield list(_iter_cons_tree(car))
+    else:
+        yield car
+
     if cdr is not None:
         yield from _iter_cons_tree(cdr)
 
 
-def _cons_tree_to_list(cons_tree):
+# It's the notation we use for specifying transmittable data
+# without implementing the alien language AST terms:
+# `nil` is `None`
+# `42` is 42
+# `ap ap cons 42 nil` is [42]
+# `ap ap cons 1 ap ap cons 2 nil` is `[1, 2]`
+DSL = t.Union[None,
+              int,
+              t.List['DSL']]
+
+
+def _cons_tree_to_list(cons_tree) -> DSL:
     return list(_iter_cons_tree(cons_tree))
 
 
@@ -150,7 +166,7 @@ def modulate(val: t.Union[int, Cons, None]) -> [bool]:
         raise ValueError(f"Can't modulate value {val} of type {type(val)}")
 
 
-def _make_cons_tree(val):
+def _make_cons_tree(val: DSL):
     if val is None or val == []:
         return None
 
@@ -172,14 +188,14 @@ if False:
     print(_make_cons_tree([None]))
 
 
-def make_request_body(val: t.Union[int, list, None]) -> str:
+def make_request_body(val: DSL) -> str:
     bits = modulate(_make_cons_tree(val))
     return ''.join(map(str, bits))
 
 
-def parse_response_body(body: str):
+def parse_response_body(body: str) -> DSL:
     bits = list(map(int, body))
-    assert set(bits) == {0, 1}, f'Invalid characters in {body}'
+    assert set(bits).issubset({0, 1}), f'Invalid characters in {body}'
     demodulated, _ = demodulate_bits(bits)
     if isinstance(demodulated, Cons):
         return _cons_tree_to_list(demodulated)
@@ -208,11 +224,6 @@ def _request_url(server_url, api_key=None):
         return url + f'?apiKey={api_key}'
     else:
         url
-
-
-DSL = t.Union[None,
-              int,
-              t.List['DSL']]
 
 
 def send_dsl(val: DSL, server_url, api_key=None):
