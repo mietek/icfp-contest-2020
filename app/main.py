@@ -495,16 +495,22 @@ def main():
                'whole_game_resp': start_game_resp})
 
     assert our_ship_id is not None
+    enemy_ship_id = ship_role_ids[('defender'
+                                   if our_role == 'attacker'
+                                   else 'defender')]
 
-    for round_i in range(10):
-        commands = [_accelerate_command_dsl(our_ship_id, [-1, -1])]
-        _log_info('sending hardoded command for acceleration',
-                {'cmd_round_i': round_i,
-                 'commands': commands})
+    for desc, commands in [('empty commands', []),
+                           ('single acceleration', [_accelerate_command_dsl(our_ship_id, [-1, -1])]),
+                           ('hardcoded acceleration', [[0, 1, [-1, -1]]]),
+                           ('flat hardcoded acceleration', [0, 1, [-1, -1]]),
+                           ('enemy ship acceleration', [_accelerate_command_dsl(enemy_ship_id, [-1, -1])])]:
+        _log_info('sending hardcoded commands',
+                  {'commands': commands,
+                   'description': desc})
         cmd_response = send_commands(player_key,
-                                    commands,
-                                    sender_f=sender_f)
-        _log_info('command sent',
+                                     commands,
+                                     sender_f=sender_f)
+        _log_info('commands sent',
                   {'cmd_response': cmd_response})
 
     # TODO: use game_response and send commands
