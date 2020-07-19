@@ -499,11 +499,12 @@ def main():
                                    if our_role == 'attacker'
                                    else 'defender')]
 
-    for desc, commands in [('empty commands', []),
-                           ('single acceleration', [_accelerate_command_dsl(our_ship_id, [-1, -1])]),
-                           ('hardcoded acceleration', [[0, 1, [-1, -1]]]),
-                           ('flat hardcoded acceleration', [0, 1, [-1, -1]]),
-                           ('enemy ship acceleration', [_accelerate_command_dsl(enemy_ship_id, [-1, -1])])]:
+    for desc, commands in [('empty commands #1', []),
+                           ('empty commands #2', []),
+                           ('empty commands #3', []),
+                           ('empty commands #4', []),
+                           ('acceleration without ship id #1', [0, [-1, -1]]),
+                           ('acceleration without ship id #2', [0, [-1, 0]])]:
         _log_info('sending hardcoded commands',
                   {'commands': commands,
                    'description': desc})
