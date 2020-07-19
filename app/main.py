@@ -332,6 +332,9 @@ def _parse_role(role):
 
 
 def _parse_static_game_info(info):
+    if info is None:
+        return None
+
     x0, role, x2, x3, x4 = info
     return {'role': _parse_role(role),
             'x0': x0,
