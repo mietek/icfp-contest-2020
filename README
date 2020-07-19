@@ -11,3 +11,21 @@ pip install -r requirements.txt
 ```
 
 Run tests with `python -m pytest .'`
+
+Using modulator/demodulator via Python REPL:
+
+```
+>>> import app.main
+>>> app.main.make_request_body([0])
+'1101000'
+>>> app.main.parse_response_body('1101000')
+[0]
+```
+
+Sending request to Alien Proxy API:
+
+```
+>>> import app.main
+>>> app.main.send_val([0], 'https://icfpc2020-api.testkontur.ru', '<PUT API KEY HERE>')
+[1, 28985]
+```

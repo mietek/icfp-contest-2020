@@ -102,3 +102,112 @@ if False:
     print(_cons_tree_to_list(Cons(2, None)))
 
     print(_cons_tree_to_list(Cons(1, Cons(2, None))))
+
+
+def _bits_from_int(num):
+    return list(map(int, f'{num:b}'))
+
+
+def _binary_length(num):
+    return len(_bits_from_int(num))
+
+
+def _width_bits_length(num):
+    return math.ceil(_binary_length(num) / 4)
+
+
+def _modulate_number(num) -> [bool]:
+    '''Returns modulated bits for the number, without the initial 2 "type bits".
+    This allows using it for both positive and negative numbers.
+    '''
+    num = abs(num)
+    n_width_bits = _width_bits_length(num)
+    n_placeholder_bits = n_width_bits * 4 - _binary_length(num)
+
+    return ([1] * n_width_bits +
+            [0] +
+            [0] * n_placeholder_bits +
+            _bits_from_int(num))
+
+
+def modulate(val: t.Union[int, Cons, None]) -> [bool]:
+    if val is None:
+        return [0, 0]
+
+    elif isinstance(val, int):
+        if val == 0:
+            return [0, 1, 0]
+        elif val > 0:
+            return [0, 1] + _modulate_number(val)
+        else:
+            return [1, 0] + _modulate_number(val)
+
+    elif isinstance(val, Cons):
+        car, cdr = val
+        return [1, 1] + modulate(car) + modulate(cdr)
+
+    else:
+        raise ValueError(f"Can't modulate value {val} of type {type(val)}")
+
+
+def _list_to_cons_tree(l):
+    if len(l) == 0:
+        return None
+    else:
+        head, *rest = l
+        return Cons(head, _list_to_cons_tree(rest))
+
+
+def make_request_body(val: t.Union[int, list, None]) -> str:
+    try:
+        val = _list_to_cons_tree(val)
+    except TypeError:
+        pass
+    bits = modulate(val)
+    return ''.join(map(str, bits))
+
+
+def parse_response_body(body: str):
+    bits = list(map(int, body))
+    assert set(bits) == {0, 1}, f'Invalid characters in {body}'
+    demodulated, _ = demodulate_bits(bits)
+    if isinstance(demodulated, Cons):
+        return _cons_tree_to_list(demodulated)
+    else:
+        return demodulated
+
+
+if False:
+    print(make_request_body([1]))
+
+    print(make_request_body(1))
+
+    print(make_request_body([0]))
+
+    print(parse_response_body('1101000'))
+    print(parse_response_body('110110001011011111111111111110111101110101100000100110111000010001000101100100100010000000110000'))
+
+    print(parse_response_body('1101100001110111110011100111010001100'))
+
+    print(make_request_body([2, 1113939892088752268, None]))
+
+
+def _request_url(server_url, api_key=None):
+    url = f'{server_url}/aliens/send'
+    if api_key is not None:
+        return url + f'?apiKey={api_key}'
+    else:
+        url
+
+
+def send_val(val, server_url, api_key=None):
+    resp = requests.post(url=_request_url(server_url, api_key),
+                         data=make_request_body(val).encode())
+    resp.raise_for_status()
+
+    return parse_response_body(resp.text)
+
+
+if False:
+    # __api_key = '<PUT API KEY HERE>'
+    print(send_val([0], 'https://icfpc2020-api.testkontur.ru', __api_key))
