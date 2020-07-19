@@ -550,11 +550,17 @@ def main():
                                    else 'defender')]
 
     our_position = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
-
+    their_ship = _extract_ship_infos(start_game_resp)[enemy_ship_id]
     for round_i in range(MAX_N_ROUNDS):
+        shooting_coords = _predicted_position(their_ship)
+        shoot_cmd = _shoot_command_dsl(enemy_ship_id,
+                                       Cons(shooting_coords[0],
+                                            shooting_coords[1]),
+                                       None)
         cmds = [_accelerate_command_dsl(our_ship_id,
                                         Cons(-our_position[0],
-                                             -our_position[1]))]
+                                             -our_position[1])),
+                shoot_cmd]
         _log_info('sending commands',
                   {'cmds': cmds,
                    'our_position_before': our_position})
@@ -564,6 +570,7 @@ def main():
                   {'whole_game_resp': cmd_resp})
 
         our_position = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
+        their_ship = _extract_ship_infos(start_game_resp)[enemy_ship_id]
 
     # TODO: use game_response and send commands
     _log_info("There's nothing more here, exciting.")
