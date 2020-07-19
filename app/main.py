@@ -488,10 +488,24 @@ def main():
                                  x3=1,
                                  sender_f=sender_f)
     ship_role_ids = _extract_ship_ids(start_game_resp)
+    our_ship_id = ship_role_ids.get(our_role)
     _log_info('started',
               {'role_ids': ship_role_ids,
-               'our_ship_id': ship_role_ids.get(our_role),
+               'our_ship_id': our_ship_id,
                'whole_game_resp': start_game_resp})
+
+    assert our_ship_id is not None
+
+    for round_i in range(10):
+        commands = [_accelerate_command_dsl(our_ship_id, [-1, -1])]
+        _log_info('sending hardoded command for acceleration',
+                {'cmd_round_i': round_i,
+                 'commands': commands})
+        cmd_response = send_commands(player_key,
+                                    commands,
+                                    sender_f=sender_f)
+        _log_info('command sent',
+                  {'cmd_response': cmd_response})
 
     # TODO: use game_response and send commands
     _log_info("There's nothing more here, exiting.")
