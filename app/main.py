@@ -255,6 +255,10 @@ if False:
     print(send_dsl([2, 1113939892088752268, None], 'https://icfpc2020-api.testkontur.ru', __api_key))
 
 
+def _countdown_request_dsl():
+    return [0]
+
+
 def _create_request_dsl():
     '''https://message-from-space.readthedocs.io/en/latest/game.html#create
     '''
@@ -301,6 +305,19 @@ def _shoot_command_dsl(ship_id: int, target: DSLVector, x3):
     return [2, ship_id, target, x3]
 
 
+def _parse_create_response(resp) -> (int, int):
+    '''Returns attacker, defender player key'''
+    (success,
+     ((attacker_flag, attacker_key),
+      (defender_flag, defender_key))) = resp
+
+    assert success == 1, f'Invalid create response {resp}'
+    assert attacker_flag == 0, f'Invalid create response {resp}'
+    assert defender_flag == 1, f'Invalid create response {resp}'
+
+    return attacker_key, defender_key
+
+
 def _parse_game_stage(game_stage: DSL):
     if game_stage == 0:
         return 'not_started_yet'
@@ -331,6 +348,9 @@ def _parse_static_game_info(info):
 
 
 def _parse_game_state(state):
+    if state is None:
+        return None
+
     game_tick, x1, ships_and_commands = state
     return {'game_tick': game_tick,
             'x1': x1,
@@ -354,5 +374,34 @@ TEST_SERVER_URL = 'https://icfpc2020-api.testkontur.ru'
 API_KEY = '69169703bf0e41f99bec6790ff8ec971'
 
 
+def send_to_test(dsl):
+    return send_dsl(dsl, TEST_SERVER_URL, API_KEY)
+
+
+def send_create(sender_f=None):
+    if sender_f is None:
+        sender_f = send_to_test
+
+    return _parse_create_response(sender_f(_create_request_dsl()))
+
+
+def send_join(player_key, sender_f=None):
+    if sender_f is None:
+        sender_f = send_to_test
+
+    return _parse_game_response(sender_f(_join_request_dsl(player_key)))
+
+
 if False:
-    print(send_dsl([0], TEST_SERVER_URL, API_KEY))
+    print(send_to_test(_countdown_request_dsl()))
+
+    print(_parse_create_response(send_dsl(_create_request_dsl(),
+                                          TEST_SERVER_URL, API_KEY)))
+
+    print(send_to_test(_countdown_request_dsl()))
+
+    print(send_create())
+
+    print(send_join(6046928247735128822))
+
+    print(send_join(1371299487238040913))
