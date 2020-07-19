@@ -802,6 +802,24 @@ ModulatedTerm.prototype.print = function () {
   return '{ ' + this.bits.join(',') + ' }';
 };
 
+var ModemTerm = {
+  tag: 'ModemTerm',
+  eval: function (env) {
+    return this;
+  },
+  apply: function (env, term) {
+    // Run modulation, discarding results. This will throw if the term contains
+    // anything that cannot be modulated.
+    modulateTerm(env, term);
+    // Return the reduced term. We evaluate the term twice (once in
+    // modulateTerm, once here), but this is just a performance issue.
+    return term.eval(env);
+  },
+  print: function () {
+    return 'mod';
+  },
+};
+
 
 // #36. Send ( 0 )
 // TODO
@@ -853,6 +871,8 @@ function readTerm(tokens) {
       return Pair(LtTerm, moreTokens);
     case 'mod':
       return Pair(ModTerm, moreTokens);
+    case 'modem':
+      return Pair(ModemTerm, moreTokens);
 
     // TODO: Implement dem, send
     case 'dem':
@@ -1046,16 +1066,21 @@ function MultiBitmapResult(bitmaps) {
   };
 }
 
+// parseInput : Text -> Term
+function parseInput(inputText) {
+  var tokens = tokenizeInput(inputText);
+  var termAndMoreTokens = readTerm(tokens);
+  var moreTokens = termAndMoreTokens.snd;
+  if (moreTokens.length != 0) {
+    throw new Error('Unexpected token: ‘' + moreTokens[0] + '’');
+  }
+  return termAndMoreTokens.fst;
+}
+
 // handleInput : Env -> String -> Either String String
 function handleInput(env, inputText) {
   try {
-    var tokens = tokenizeInput(inputText);
-    var termAndMoreTokens = readTerm(tokens);
-    var moreTokens = termAndMoreTokens.snd;
-    if (moreTokens.length != 0) {
-      throw new Error('Unexpected token: ‘' + moreTokens[0] + '’');
-    }
-    var term = termAndMoreTokens.fst;
+    var term = parseInput(inputText);
     var value = evalTerm(env, term);
     if (typeof value.render !== 'undefined') {
       return Right(MultiBitmapResult(value.render()));
@@ -1076,6 +1101,25 @@ function assertRight(string, expectedRight) {
       handleInput(Env(), string),
       Right(StringResult(expectedRight))
     );
+  }
+}
+
+// assertEvalTerm : String -> Term -> ()
+function assertEvalTerm(inputText, expectedTerm) {
+  if (typeof window === 'undefined') {
+    const assert = require('assert');
+    const inputTerm = parseInput(inputText);
+    const resultTerm = evalTerm(Env(), inputTerm);
+    assert.deepEqual(resultTerm, expectedTerm);
+  }
+}
+
+// assertEvalThrows : String -> String | RegExp -> ()
+function assertEvalThrows(inputText, expectedThrow) {
+  if (typeof window === 'undefined') {
+    const assert = require('assert');
+    const inputTerm = parseInput(inputText);
+    assert.throws(() => evalTerm(Env(), inputTerm), expectedThrow);
   }
 }
 
@@ -1745,3 +1789,11 @@ assertRight('ap isnil ap ap cons 0 1', 'f');
 // assertRight('()', 'nil');
 assertRight('vec', 'cons');
 // assertRight('if0', 'if0');
+
+assertEvalTerm('modem', ModemTerm);
+assertEvalTerm('ap modem 1', NumTerm(1));
+assertEvalTerm('ap modem ap ap cons 1 nil', PairTerm(NumTerm(1), NilTerm));
+assertEvalThrows(
+  'ap modem ap add 1',
+  /modulateTerm cannot accept term of type: PartialFunctionTerm/,
+);
