@@ -226,9 +226,10 @@ def send_dsl(val: DSL, server_url, api_key=None):
     resp = requests.post(url=_request_url(server_url, api_key),
                          data=bit_str.encode())
     resp.raise_for_status()
+    _log_info(f'Response code: {resp.status_code}, body: {resp.text}')
 
     resp_dsl = parse_response_body(resp.text)
-    _log_info(f'Response: {resp.status_code}, body: {resp.text}, dsl: {resp_dsl}')
+    _log_info(f'Response dsl: {resp_dsl}')
 
     return resp_dsl
 
