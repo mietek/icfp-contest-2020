@@ -4,26 +4,9 @@ import itertools as itt
 import typing as t
 import collections as c
 import sys
+import functools as fnt
 
 import requests
-
-
-def main():
-    server_url = sys.argv[1]
-    player_key = sys.argv[2]
-    print('ServerUrl: %s; PlayerKey: %s' % (server_url, player_key))
-
-    res = requests.post(server_url, data=player_key)
-    if res.status_code != 200:
-        print('Unexpected server response:')
-        print('HTTP code:', res.status_code)
-        print('Response body:', res.text)
-        exit(2)
-    print('Server response:', res.text)
-
-
-if __name__ == '__main__':
-    main()
 
 
 def _subsequent_ones(bits):
@@ -179,7 +162,7 @@ def _make_cons_tree(val: DSL):
         return Cons(_make_cons_tree(head), _make_cons_tree(rest))
 
     else:
-        raise ValueError("Can't transform {head} of type {type(head)} to cons tree")
+        raise ValueError(f"Can't transform {val} of type {type(val)} to cons tree")
 
 
 if False:
@@ -224,7 +207,7 @@ def _request_url(server_url, api_key=None):
     if api_key is not None:
         return url + f'?apiKey={api_key}'
     else:
-        url
+        return url
 
 
 def _log_info(msg):
@@ -431,3 +414,32 @@ if False:
     print(send_join(6046928247735128822))
 
     print(send_join(1371299487238040913))
+
+
+def main():
+    server_url = sys.argv[1]
+    player_key = sys.argv[2]
+    print(f'server_url = {server_url}, player_key = {player_key}')
+
+    player_key = int(player_key)
+
+    sender_f = fnt.partial(send_dsl, server_url=server_url, api_key=None)
+
+    print(f'Joining as {player_key}')
+    send_join(player_key,
+              sender_f=sender_f)
+
+    print(f'Starting with arbitrary ship parameters')
+    send_start(player_key,
+               x0=42,
+               x1=0,
+               x2=0,
+               x3=1,
+               sender_f=sender_f)
+
+    # TODO: use game_response and send commands
+    print("There nothing more here, exiting.")
+
+
+if __name__ == '__main__':
+    main()
