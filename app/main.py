@@ -381,6 +381,25 @@ def _parse_ship_and_command(ship_and_command):
     return {'ship': _parse_ship(ship),
             'applied_commands': cmds}
 
+def _parse_command(cmd):
+    if cmd[0] == 0:
+        return {'command': 'accelerate',
+                'x': cmd[1][0],
+                'y': cmd[1][1]}
+    elif cmd[0] == 1:
+        return {'command': 'detonate'}
+    elif cmd[0] == 2:
+        return {'command': 'shoot',
+                'target_x': cmd[1][0],
+                'target_y': cmd[1][1],
+                'x3': cmd[2],
+                'x4': cmd[3],
+                'x5': cmd[4]}
+    elif cmd[0] == 3:
+        return {'command': 'fork',
+                'form_params': cmd[1]}
+    else:
+        return {'command': 'unknown'}
 
 def _parse_game_state(state):
     if state is None:
