@@ -503,8 +503,10 @@ def main():
                            ('empty commands #2', []),
                            ('empty commands #3', []),
                            ('empty commands #4', []),
-                           ('acceleration without ship id #1', [0, [-1, -1]]),
-                           ('acceleration without ship id #2', [0, [-1, 0]])]:
+                           ('acceleration without ship id #1', [[0, [-1, -1]]]),
+                           ('acceleration without ship id #2', [[0, [-1, 0]]]),
+                           ('detonate', [[1, our_ship_id]]),
+                           ('detonate without ship id', [[1]])]:
         _log_info('sending hardcoded commands',
                   {'commands': commands,
                    'description': desc})
