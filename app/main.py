@@ -299,8 +299,7 @@ def _commands_request_dsl(player_key: int, commands: t.List[t.List[DSL]]):
     '''
     return [4, player_key, commands]
 
-
-DSLVector = t.List[int]
+DSLVector = Cons
 
 
 def _accelerate_command_dsl(ship_id: int, vector: DSLVector):
@@ -463,6 +462,18 @@ def _extract_ship_ids(start_game_resp):
             for sh_cmd in start_game_resp['game_state']['ships_and_commands']}
 
 
+def _extract_ship_infos(game_resp) -> {int, dict}:
+    '''Dict with ship_id as key, "ship_and_command" as value.'''
+    if game_resp.get('game_state') is None:
+        return {}
+
+    return {sh_cmd['ship']['ship_id']: sh_cmd
+            for sh_cmd in game_resp['game_state']['ships_and_commands']}
+
+
+MAX_N_ROUNDS = 256
+
+
 def main():
     server_url = sys.argv[1]
     player_key = sys.argv[2]
@@ -503,22 +514,21 @@ def main():
                                    if our_role == 'attacker'
                                    else 'defender')]
 
-    for desc, commands in [('empty commands #1', []),
-                           ('empty commands #2', []),
-                           ('acceleration with vector #1', [[0, our_ship_id, Cons(-1, -1)]]),
-                           ('acceleration with vector #2', [[0, our_ship_id, Cons(-1, -1)]]),
-                           ('acceleration with linked list', [[0, our_ship_id, [-1, -1]]]),
-                           ('shoot with vector', [[2, our_ship_id, Cons(42, 42), 1]]),
-                           ('shoot with vector, with nil', [[2, our_ship_id, Cons(42, 42), None]]),
-                           ('shoot with linked list', [[2, our_ship_id, [42, 42], 1]])]:
-        _log_info('sending hardcoded commands',
-                  {'commands': commands,
-                   'description': desc})
-        cmd_response = send_commands(player_key,
-                                     commands,
-                                     sender_f=sender_f)
+    our_position = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
+
+    for round_i in range(MAX_N_ROUNDS):
+        cmds = [_accelerate_command_dsl(our_ship_id,
+                                        Cons(-our_position[0],
+                                             -our_position[1]))]
+        _log_info('sending commands',
+                  {'cmds': cmds,
+                   'our_position_before': our_position})
+        cmd_resp = send_commands(player_key, cmds,
+                                 sender_f=sender_f)
         _log_info('commands sent',
-                  {'cmd_response': cmd_response})
+                  {'whole_game_resp': cmd_resp})
+
+        our_position = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
 
     # TODO: use game_response and send commands
     _log_info("There's nothing more here, exiting.")
