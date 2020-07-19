@@ -211,7 +211,7 @@ def _request_url(server_url, api_key=None):
 
 
 def _log_info(msg):
-    print(msg, file=sys.stderr)
+    print(msg)
 
 
 def send_dsl(val: DSL, server_url, api_key=None):
