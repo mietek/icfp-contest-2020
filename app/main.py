@@ -528,6 +528,9 @@ if False:
     print(_make_acc_vector(-42, 0))
 
 
+PLANET_SIDE_LENGTH = 36
+
+
 def main():
     server_url = sys.argv[1]
     player_key = sys.argv[2]
@@ -571,9 +574,13 @@ def main():
     our_position = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
 
     for round_i in range(MAX_N_ROUNDS):
-        cmds = [_accelerate_command_dsl(our_ship_id,
-                                        _make_acc_vector(-our_position[0],
-                                                         -our_position[1]))]
+        if math.hypot(*our_position) < 2 * PLANET_SIDE_LENGTH:
+            cmds = [_accelerate_command_dsl(our_ship_id,
+                                            _make_acc_vector(-our_position[0],
+                                                             -our_position[1]))]
+        else:
+            cmds = []
+
         _log_info('sending commands',
                   {'cmds': cmds,
                    'our_position_before': our_position})
