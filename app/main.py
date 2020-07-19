@@ -167,9 +167,23 @@ def _make_request_body(val: t.Union[int, list, None]) -> str:
     return ''.join(map(str, bits))
 
 
+def _parse_response_body(body: str):
+    bits = list(map(int, body))
+    assert set(bits) == {0, 1}, f'Invalid characters in {body}'
+    demodulated, _ = demodulate_bits(bits)
+    if isinstance(demodulated, Cons):
+        return _cons_tree_to_list(demodulated)
+    else:
+        return demodulated
+
+
 if False:
     print(_make_request_body([1]))
 
     print(_make_request_body(1))
 
     print(_make_request_body([0]))
+
+    print(_parse_response_body('1101000'))
+
+    print(_parse_response_body('1101100001110111110011100111010001100'))
