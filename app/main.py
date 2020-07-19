@@ -381,6 +381,25 @@ def _parse_ship_and_command(ship_and_command):
     return {'ship': _parse_ship(ship),
             'applied_commands': cmds}
 
+def _parse_command(cmd):
+    if cmd[0] == 0:
+        return {'command': 'accelerate',
+                'x': cmd[1][0],
+                'y': cmd[1][1]}
+    elif cmd[0] == 1:
+        return {'command': 'detonate'}
+    elif cmd[0] == 2:
+        return {'command': 'shoot',
+                'target_x': cmd[1][0],
+                'target_y': cmd[1][1],
+                'x3': cmd[2],
+                'x4': cmd[3],
+                'x5': cmd[4]}
+    elif cmd[0] == 3:
+        return {'command': 'fork',
+                'form_params': cmd[1]}
+    else:
+        return {'command': 'unknown'}
 
 def _parse_game_state(state):
     if state is None:
@@ -478,17 +497,17 @@ def _calculate_gravity(position):
         else:
             return [0, 0]
 
-def _predicted_position(ship_and_command):
+def _predicted_position(ship_and_commands):
     '''To predict the next position of the ship, we need:
     current position, current velocity, gravity force
     and a previous command (especially how it accelerates)
     Then it's actually quite simple!
     '''
-    ship, cmds = ship_and_command
-    role, ship_id, position, velocity, x4, x5, x6, x7 = ship
-    [current_x, current_y] = position
-    [vel_x, vel_y] = velocity
-    [g_x, g_y] = _calculate_gravity(position)
+    ship = ship_and_commands['ship']
+    # commands = ship_and_commands['applied_commands']
+    [current_x, current_y] = ship['position']
+    [vel_x, vel_y] = ship['velocity']
+    [g_x, g_y] = _calculate_gravity(ship['position'])
     # parsing commands to extract the current thrust left for later
     new_vel_x = vel_x + g_x
     new_vel_y = vel_y + g_y
@@ -572,14 +591,23 @@ def main():
                                    else 'defender')]
 
     our_position = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
-
+    their_ship = _extract_ship_infos(start_game_resp)[enemy_ship_id]
     for round_i in range(MAX_N_ROUNDS):
+
+        shooting_coords = _predicted_position(their_ship)
+        shoot_cmd = _shoot_command_dsl(enemy_ship_id,
+                                       Cons(shooting_coords[0],
+                                            shooting_coords[1]),
+                                       None)
+
         if math.hypot(*our_position) < 2 * PLANET_SIDE_LENGTH:
             cmds = [_accelerate_command_dsl(our_ship_id,
                                             _make_acc_vector(-our_position[0],
-                                                             -our_position[1]))]
+                                                             -our_position[1])),
+                    shoot_cmd]
         else:
             cmds = []
+
 
         _log_info('sending commands',
                   {'cmds': cmds,
@@ -589,7 +617,9 @@ def main():
         _log_info('commands sent',
                   {'whole_game_resp': cmd_resp})
 
+
         our_position = _extract_ship_infos(cmd_resp)[our_ship_id]['ship']['position']
+        their_ship = _extract_ship_infos(cmd_resp)[enemy_ship_id]
 
     # TODO: use game_response and send commands
     _log_info("There's nothing more here, exciting.")
