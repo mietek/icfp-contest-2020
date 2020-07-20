@@ -777,7 +777,7 @@ def main():
             # Let’s shoot every few turns
             # TODO check if the enemy is in range
             # TODO check temperature (x5?)
-            if ship['x4'][1] > 0 and game_state['game_tick'] % 5 == 0:
+            if game_state['game_tick'] % 5 == 0:
                 cmds.append(shoot_cmd)
 
             # TODO: If the circumstances are right, fork the ship.
