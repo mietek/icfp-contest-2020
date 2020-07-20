@@ -588,11 +588,14 @@ if False:
     assert _trajectory_hits_planet([[19, 18], [20, 18]]) == False
 
 def _acceleration_heuristic(position, velocity):
-    trajectory = _predicted_position(position, velocity)
+    trajectory = _predicted_trajectory(position, velocity)
     if _trajectory_hits_planet(trajectory):
         current_gravity = _calculate_gravity(position)
         return _acceleration_perpendicular_to_gravity(current_gravity)
     return None
+
+if False:
+    assert _acceleration_heuristic([20, 20], [0, 0]) == [1, 0]
 
 def _extract_ship_infos(game_resp) -> {int, dict}:
     '''Dict with ship_id as key, "ship_and_command" as value.'''
