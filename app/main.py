@@ -319,6 +319,16 @@ def _shoot_command_dsl(ship_id: int, target: DSLVector, x3):
     return [2, ship_id, target, x3]
 
 
+def _fork_command_dsl(ship_id: int, x0, x1, x2, x3):
+    '''Forks the ship
+    `x0`...`x3` most likely have the same meaning as in the start request
+    (fuel, ammo, coolant, bombs)
+    Most likely, the ship needs to have N+1 bombs in order to fork N additional ships
+    This is all guesswork!
+    '''
+    return [3, ship_id, [x0, x1, x2, x3]]
+
+
 def _parse_create_response(resp) -> (int, int):
     '''Returns attacker, defender player key'''
     (success,
@@ -641,7 +651,29 @@ def _test_start_params(fuel, ammo, coolant, bombs):
     _thread.start_new_thread(send_join, (create_resp[0],))
     send_join(create_resp[1])
     start_resp = send_start(create_resp[1], fuel, ammo, coolant, bombs)
-    print(start_resp)
+    print('sent start', {'start_resp': start_resp})
+
+
+# forking works!!!!!!11!111
+# working forking example = _fork_command_dsl(our_ship_id, 1, 0, 0, 1)
+# probably forks off a new ship with 1 fuel and 1 bomb (the absolute minimum)
+
+def _test_forking_helper(player_key):
+    send_join(player_key)
+    send_start(player_key, 100, 0, 0, 10)
+
+def _test_forking(forking_dsl):
+    '''For manual use only'''
+    create_resp = send_create()
+    _thread.start_new_thread(_test_forking_helper, (create_resp[0],))
+    join_resp = send_join(create_resp[1])
+    our_role = join_resp.get('static_game_info', {}).get('role')
+    start_resp = send_start(create_resp[1], 200, 0, 0, 10)
+    ship_role_ids = _extract_ship_ids(start_resp)
+    ship_id = ship_role_ids.get(our_role)
+    cmd_resp = send_commands(create_resp[1], [forking_dsl])
+    print('sent cmds', {'cmd_resp': cmd_resp})
+
 
 
 def main():
@@ -680,6 +712,18 @@ def main():
         sys.exit()
 
     ship_role_ids = _extract_ship_ids(start_game_resp)
+
+    # TODO: Now that we have forking, we may need to control more than 1 ship!
+    #
+    # If we only fork after obtaining a stable orbit, we may not need to do accelerate the forked ships
+    #
+    # But we should shoot from forked ships, and we should kamikaze-detonate if the circumstances are right
+    #
+    # That is, any attacking ship can kamikaze-detonate a defender that is within range,
+    # if EITHER it is the last defender OR there are more friendly attackers left.
+    #
+    # Detonation blast radius is a square about 22x22 size.
+
     our_ship_id = ship_role_ids.get(our_role)
     assert our_ship_id is not None
     enemy_ship_id = ship_role_ids[('defender'
@@ -694,6 +738,8 @@ def main():
     our_velocity = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['velocity']
     their_ship = _extract_ship_infos(start_game_resp)[enemy_ship_id]
     for round_i in range(MAX_N_ROUNDS):
+
+        # If we are attacking, and a defender ship is in range
 
         shooting_coords = _predicted_position(their_ship)
         shoot_cmd = _shoot_command_dsl(enemy_ship_id,
@@ -713,6 +759,18 @@ def main():
         #             shoot_cmd]
         # else:
         #     cmds = []
+
+
+        # TODO: If the circumstances are right, fork the ship.
+        #
+        # That is, probably fork after obtaining a stable orbit.
+        #
+        # The ship probably can only fork N-1 times, where N is the number of available bombs.
+
+        # if ???:
+        #    fork_cmd = _fork_command_dsl(our_ship_id, 1, 0, 0, 1)
+        #    cmds.append(fork_cmd)
+
 
         _log_info('sending commands',
                   {'cmds': cmds,
