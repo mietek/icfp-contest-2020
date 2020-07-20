@@ -686,6 +686,15 @@ def _make_rng():
     return np.random.default_rng()
 
 
+# Detonation diameter is approximately 22x22
+MAX_KAMIKAZE_DISTANCE = math.hypot(10, 10)
+
+def _pos_distance(pos1, pos2):
+    x1, y1 = pos1
+    x2, y2 = pos2
+    return math.hypot(x2 - x1, y2 - y1)
+
+
 def main():
     server_url = sys.argv[1]
     player_key = sys.argv[2]
@@ -754,6 +763,8 @@ def main():
 
         enemy_ship = None
         enemy_ship_and_commands = None
+        enemy_ship_count = 0
+        our_ship_count = 0
         for ship_and_command in game_state['ships_and_commands']:
             ship = ship_and_command['ship']
             # For now ignore that there can be multiple enemy ships, and just
@@ -761,6 +772,9 @@ def main():
             if ship['role'] != our_role:
                 enemy_ship = ship
                 enemy_ship_and_commands = ship_and_command
+                enemy_ship_count += 1
+            else:
+                our_ship_count += 1
 
         # We can only shoot once per round, regardless of how many ships there are?
         already_shot_this_round = False
@@ -768,6 +782,27 @@ def main():
             ship = ship_and_command['ship']
             if ship['role'] != our_role:
                 continue
+
+            # Should we try to kamikaze?
+            # If we have only one bomb (don't waste more bombs that can be used for forking) and if
+            # EITHER there is only one enemy remaining
+            # OR there we have more ships, then see how close is the closest enemy
+            if _remaining_bombs(ship) == 1 and (enemy_ship_count == 1 or our_ship_count > 1):
+                # See how the close is the closest enemy
+                closest_enemy_distance = 999999 # Really Big Number
+                our_position = ship['position']
+                for new_enemies in game_state['ships_and_commands']:
+                    new_enemy = new_enemies['ship']
+                    if new_enemy['role'] != our_role:
+                        new_enemy_position = new_enemy['position']
+                        new_enemy_distance = distance(our_position, new_enemy_position)
+                        if new_enemy_distance < closest_enemy_distance:
+                            closest_enemy_distance = new_enemy_distance
+                # Is the closest enemy close enough to die when we detonate?
+                if closest_enemy_distance < MAX_KAMIKAZE_DISTANCE:
+                    detonate_cmd = _detonate_command_dsl(ship['ship_id'])
+                    cmds.append(detonate_cmd)
+                    continue
 
             acceleration = _acceleration_heuristic(ship['position'], ship['velocity'])
 
