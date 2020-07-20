@@ -677,7 +677,8 @@ def _remaining_fuel(ship):
 
 
 def _make_rng():
-    return np.random.default_rng(42)
+    # return np.random.default_rng(42)
+    return np.random.default_rng()
 
 
 def main():
