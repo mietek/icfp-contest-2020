@@ -588,10 +588,10 @@ def main():
 
     _log_info('starting with arbitrary ship parameters')
     start_game_resp = send_start(player_key,
-                                 x0=400,
-                                 x1=0,
-                                 x2=0,
-                                 x3=1,
+                                 x0=416, # fuel
+                                 x1=0,   # ammo
+                                 x2=0,   # coolant
+                                 x3=16,  # bombs
                                  sender_f=sender_f)
     ship_role_ids = _extract_ship_ids(start_game_resp)
     our_ship_id = ship_role_ids.get(our_role)
