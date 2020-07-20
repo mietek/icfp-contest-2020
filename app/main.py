@@ -783,7 +783,7 @@ def main():
             # The ship probably can only fork N-1 times, where N is the number of available bombs.
 
             # For now we fork whenever we have bombs.
-            if ship['x4'][3] > 0 and game_state['game_tick'] > 5 and  game_state['game_tick']
+            if ship['x4'][3] > 0 and game_state['game_tick'] > 5:
                fork_cmd = _fork_command_dsl(our_ship_id, 1, 0, 0, 1)
                cmds.append(fork_cmd)
 
