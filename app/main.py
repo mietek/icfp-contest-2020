@@ -573,7 +573,7 @@ def main():
 
     _log_info('starting with arbitrary ship parameters')
     start_game_resp = send_start(player_key,
-                                 x0=42,
+                                 x0=400,
                                  x1=0,
                                  x2=0,
                                  x3=1,
