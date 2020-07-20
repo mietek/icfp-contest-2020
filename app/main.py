@@ -553,9 +553,9 @@ def _next_velocity(position, velocity):
 def _predicted_trajectory(position, velocity, n = 20):
     if n == 0:
         return []
-    next_pos = _next_position(position, velocity)
-    next_vel = _next_velocity(position, velocity)
-    return [next_pos] + _predicted_trajectory(next_pos, next_vel, n - 1)
+    new_vel = _next_velocity(position, velocity)
+    new_pos = _next_position(position, new_vel)
+    return [new_pos] + _predicted_trajectory(new_pos, new_vel, n - 1)
 
 if False:
     # See https://icfpcontest2020.github.io/#/visualize?game=a1432d8b-ca4e-48f1-8900-6cb4dbbe9bfb
