@@ -703,7 +703,7 @@ def main():
         acceleration = _acceleration_heuristic(our_position, our_velocity)
         cmds = []
         if acceleration is not None:
-            cmds.push(_accelerate_command_dsl(our_ship_id, acceleration))
+            cmds.append(_accelerate_command_dsl(our_ship_id, acceleration))
 
         # if math.hypot(*our_position) < 2 * PLANET_SIDE_LENGTH:
         #     cmds = [_accelerate_command_dsl(our_ship_id,
