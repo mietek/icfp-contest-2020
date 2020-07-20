@@ -627,6 +627,7 @@ if False:
     print(_make_acc_vector(42, 8))
 
     print(_make_acc_vector(-42, 0))
+    print(_make_acc_vector(*[-42, 0]))
 
 
 # fuel       min = 1    max = 446
@@ -703,7 +704,7 @@ def main():
         acceleration = _acceleration_heuristic(our_position, our_velocity)
         cmds = []
         if acceleration is not None:
-            cmds.append(_accelerate_command_dsl(our_ship_id, _make_acc_vector(acceleration)))
+            cmds.append(_accelerate_command_dsl(our_ship_id, _make_acc_vector(*acceleration)))
 
         # if math.hypot(*our_position) < 2 * PLANET_SIDE_LENGTH:
         #     cmds = [_accelerate_command_dsl(our_ship_id,
