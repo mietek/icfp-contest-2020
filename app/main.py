@@ -665,6 +665,11 @@ def _test_forking(forking_dsl):
 
 
 
+def _ship_has_stable_orbit(ship):
+    # heuristic based on watching stable orbits in simulations
+    return math.hypot(*ship['velocity']) > 8
+
+
 def main():
     server_url = sys.argv[1]
     player_key = sys.argv[2]
@@ -769,10 +774,10 @@ def main():
             #
             # The ship probably can only fork N-1 times, where N is the number of available bombs.
 
-            # For now we fork whenever we have bombs.
-            if ship['x4'][3] > 0 and game_state['game_tick'] > 5:
-               fork_cmd = _fork_command_dsl(our_ship_id, 1, 0, 0, 1)
-               cmds.append(fork_cmd)
+            # Fork if we have bombs and a stable orbit so the forks don't crash.
+            if ship['x4'][3] > 0 and _ship_has_stable_orbit(ship):
+                fork_cmd = _fork_command_dsl(our_ship_id, 1, 0, 0, 1)
+                cmds.append(fork_cmd)
 
         _log_info('sending commands',
                   {'cmds': cmds})
