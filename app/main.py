@@ -438,7 +438,6 @@ def _parse_game_response(game_resp: DSL):
 
 
 TEST_SERVER_URL = 'https://icfpc2020-api.testkontur.ru'
-API_KEY = '69169703bf0e41f99bec6790ff8ec971'
 
 
 def send_to_test(dsl):
