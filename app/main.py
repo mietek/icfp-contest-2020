@@ -699,8 +699,8 @@ def main():
 
     _log_info('starting with arbitrary ship parameters')
     start_game_resp = send_start(player_key,
-                                 x0=416, # fuel
-                                 x1=0,   # ammo
+                                 x0=256, # fuel
+                                 x1=40,  # ammo
                                  x2=0,   # coolant
                                  x3=16,  # bombs
                                  sender_f=sender_f)
@@ -764,10 +764,11 @@ def main():
                                                 shooting_coords[1]),
                                            1)
 
-            # If we have ammo shoot at the enemy
+            # If we have ammo, shoot at the enemy
+            # Let’s shoot every few turns
             # TODO check if the enemy is in range
             # TODO check temperature (x5?)
-            if ship['x4'][1] > 0:
+            if ship['x4'][1] > 0 and game_state['game_tick'] % 5 == 0:
                 cmds.append(shoot_cmd)
 
             # TODO: If the circumstances are right, fork the ship.
@@ -776,8 +777,8 @@ def main():
             #
             # The ship probably can only fork N-1 times, where N is the number of available bombs.
 
-            # For now we fork whenever we have bombs
-            if ship['x4'][3] > 0 and game_state['game_tick'] > 3:
+            # For now we fork whenever we have bombs.
+            if ship['x4'][3] > 0 and game_state['game_tick'] > 5 and  game_state['game_tick']
                fork_cmd = _fork_command_dsl(our_ship_id, 1, 0, 0, 1)
                cmds.append(fork_cmd)
 
