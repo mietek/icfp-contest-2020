@@ -631,6 +631,8 @@ if False:
     print(_make_acc_vector(*[-42, 0]))
 
 
+# TODO: I think we got the names wrong... ammo may be coolant? coolant may be unknown?
+
 # fuel       min = 1    max = 446
 # ammo       min = 0    max = 111    1 ammo    =  4 fuel    start params to maximize ammo    = 2,111,0,1
 # coolant    min = 0    max =  37    1 coolant = 12 fuel    start params to maximize coolant = 2,0,37,1
@@ -704,10 +706,10 @@ def main():
 
     _log_info('starting with arbitrary ship parameters')
     start_game_resp = send_start(player_key,
-                                 x0=256, # fuel
-                                 x1=40,  # ammo
+                                 x0=384, # fuel
+                                 x1=0,   # ammo
                                  x2=0,   # coolant
-                                 x3=16,  # bombs
+                                 x3=32,  # bombs
                                  sender_f=sender_f)
     _log_info('started',
               {'start_game_resp': start_game_resp})
