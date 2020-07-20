@@ -599,7 +599,7 @@ def main():
     our_role = join_game_resp.get('static_game_info', {}).get('role')
     _log_info('joined',
               {'our_role': our_role,
-               'whole_game_resp': join_game_resp})
+               'join_game_resp': join_game_resp})
 
     _log_info('starting with arbitrary ship parameters')
     start_game_resp = send_start(player_key,
@@ -609,9 +609,7 @@ def main():
                                  x3=16,  # bombs
                                  sender_f=sender_f)
     _log_info('started',
-              {'role_ids': ship_role_ids,
-               'our_ship_id': our_ship_id,
-               'whole_game_resp': start_game_resp})
+              {'start_game_resp': start_game_resp})
 
     if (start_game_resp.get('game_stage') == 'finished'):
         _log_info('finished already; exiting')
@@ -619,11 +617,14 @@ def main():
 
     ship_role_ids = _extract_ship_ids(start_game_resp)
     our_ship_id = ship_role_ids.get(our_role)
-
     assert our_ship_id is not None
     enemy_ship_id = ship_role_ids[('defender'
                                    if our_role == 'attacker'
                                    else 'defender')]
+    _log_info('extracted ids',
+              {'role_ids': ship_role_ids,
+              'our_ship_id': our_ship_id,
+              'enemy_ship_id': enemy_ship_id})
 
     our_position = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
     their_ship = _extract_ship_infos(start_game_resp)[enemy_ship_id]
@@ -650,7 +651,7 @@ def main():
         cmd_resp = send_commands(player_key, cmds,
                                  sender_f=sender_f)
         _log_info('commands sent',
-                  {'whole_game_resp': cmd_resp})
+                  {'cmd_resp': cmd_resp})
 
 
         our_position = _extract_ship_infos(cmd_resp)[our_ship_id]['ship']['position']
