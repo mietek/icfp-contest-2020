@@ -608,12 +608,17 @@ def main():
                                  x2=0,   # coolant
                                  x3=16,  # bombs
                                  sender_f=sender_f)
-    ship_role_ids = _extract_ship_ids(start_game_resp)
-    our_ship_id = ship_role_ids.get(our_role)
     _log_info('started',
               {'role_ids': ship_role_ids,
                'our_ship_id': our_ship_id,
                'whole_game_resp': start_game_resp})
+
+    if (start_game_resp.get('game_stage') == 'finished'):
+        _log_info('finished already; exiting')
+        sys.exit()
+
+    ship_role_ids = _extract_ship_ids(start_game_resp)
+    our_ship_id = ship_role_ids.get(our_role)
 
     assert our_ship_id is not None
     enemy_ship_id = ship_role_ids[('defender'
