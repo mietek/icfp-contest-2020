@@ -735,7 +735,6 @@ def main():
               'our_ship_id': our_ship_id,
               'enemy_ship_id': enemy_ship_id})
 
-    our_position = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
     their_ship = _extract_ship_infos(start_game_resp)[enemy_ship_id]
     for round_i in range(MAX_N_ROUNDS):
 
@@ -747,10 +746,9 @@ def main():
                 continue
 
             acceleration = _acceleration_heuristic(ship['position'], ship['velocity'])
-            cmds = []
-            if acceleration is not None:
-                cmds.append(_accelerate_command_dsl(our_ship_id, _make_acc_vector(*acceleration)))
 
+            if acceleration is not None:
+                cmds.append(_accelerate_command_dsl(ship['ship_id'], _make_acc_vector(*acceleration)))
 
             # If we are attacking, and a defender ship is in range
 
@@ -771,14 +769,12 @@ def main():
             #    cmds.append(fork_cmd)
 
         _log_info('sending commands',
-                  {'cmds': cmds,
-                   'our_position_before': our_position})
+                  {'cmds': cmds})
         cmd_resp = send_commands(player_key, cmds,
                                  sender_f=sender_f)
         _log_info('commands sent',
                   {'cmd_resp': cmd_resp})
 
-        our_position = _extract_ship_infos(cmd_resp)[our_ship_id]['ship']['position']
         their_ship = _extract_ship_infos(cmd_resp)[enemy_ship_id]
         game_state = cmd_resp['game_state']
 
