@@ -767,6 +767,11 @@ def main():
             if acceleration is not None and ship['x4'][0] > 0:
                 cmds.append(_accelerate_command_dsl(ship['ship_id'], _make_acc_vector(*acceleration)))
 
+            random_acc_draw = rng.random()
+            if random_acc_draw < 0.1:
+                cmds.append(_accelerate_command_dsl(ship['ship_id'], _make_acc_vector(*ship['velocity'])))
+
+
             # shooting_coords = _predicted_position(enemy_ship_and_commands)
             shooting_coords = _predicted_trajectory(enemy_ship['position'], enemy_ship['velocity'], n=1)[0]
             shoot_cmd = _shoot_command_dsl(ship['ship_id'],
