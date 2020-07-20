@@ -677,6 +677,9 @@ def _ship_has_stable_orbit(ship):
 def _remaining_fuel(ship):
     return ship['x4'][0]
 
+def _remaining_bombs(ship):
+    return ship['x4'][3]
+
 
 def _make_rng():
     # return np.random.default_rng(42)
@@ -803,7 +806,7 @@ def main():
             # Fork if we have >1 bombs and a stable orbit so the forks don't crash.
             # Added randomness for wider forks cloud.
             fork_draw = rng.random()
-            if ship['x4'][3] > 1 and _ship_has_stable_orbit(ship) and fork_draw > 0.5:
+            if _remaining_bombs(ship) > 1 and _ship_has_stable_orbit(ship) and fork_draw > 0.5:
                 fork_cmd = _fork_command_dsl(our_ship_id,
                                              _remaining_fuel(ship) // 2,
                                              0,
