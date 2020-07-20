@@ -778,8 +778,8 @@ def main():
             #
             # The ship probably can only fork N-1 times, where N is the number of available bombs.
 
-            # Fork if we have bombs and a stable orbit so the forks don't crash.
-            if ship['x4'][3] > 0 and _ship_has_stable_orbit(ship):
+            # Fork if we have >1 bombs and a stable orbit so the forks don't crash.
+            if ship['x4'][3] > 1 and _ship_has_stable_orbit(ship):
                 fork_cmd = _fork_command_dsl(our_ship_id,
                                              _remaining_fuel(ship) // 2,
                                              0,
