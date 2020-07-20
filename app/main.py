@@ -598,7 +598,7 @@ def main():
         shoot_cmd = _shoot_command_dsl(enemy_ship_id,
                                        Cons(shooting_coords[0],
                                             shooting_coords[1]),
-                                       [5, 0, 4])
+                                       1)
 
         if math.hypot(*our_position) < 2 * PLANET_SIDE_LENGTH:
             cmds = [_accelerate_command_dsl(our_ship_id,
