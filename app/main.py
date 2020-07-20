@@ -485,18 +485,33 @@ def _calculate_gravity(position):
     [x,y] = position
     if abs(x) > abs(y):
         if x > 0:
-            return [1, 0]
-        elif x < 0:
             return [-1, 0]
+        elif x < 0:
+            return [1, 0]
         else:
             return [0, 0]
     else:
         if y > 0:
-            return [0, 1]
-        elif y < 0:
             return [0, -1]
+        elif y < 0:
+            return [0, 1]
         else:
             return [0, 0]
+
+if False:
+    # note that positive Y values are below the planet
+    # below the planet
+    assert _calculate_gravity([1, 2]) == [0, -1]
+    assert _calculate_gravity([-1, 2]) == [0, -1]
+    # to the right of the planet
+    assert _calculate_gravity([2, -1]) == [-1, 0]
+    assert _calculate_gravity([2, 1]) == [-1, 0]
+    # above the planet
+    assert _calculate_gravity([1, -2]) == [0, 1]
+    assert _calculate_gravity([-1, -2]) == [0, 1]
+    # the the left of the planet
+    assert _calculate_gravity([-2, 1]) == [1, 0]
+    assert _calculate_gravity([-2, -1]) == [1, 0]
 
 def _predicted_position(ship_and_commands):
     '''To predict the next position of the ship, we need:
