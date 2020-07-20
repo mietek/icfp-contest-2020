@@ -10,7 +10,6 @@ import _thread
 
 import requests
 
-
 def _subsequent_ones(bits):
     for bit in bits:
         if bit:
@@ -525,12 +524,75 @@ def _predicted_position(ship_and_commands):
     [vel_x, vel_y] = ship['velocity']
     [g_x, g_y] = _calculate_gravity(ship['position'])
     # parsing commands to extract the current thrust left for later
+    # NOTE(jdudek): does past acceleration matter at all?
     new_vel_x = vel_x + g_x
     new_vel_y = vel_y + g_y
     next_x = current_x - new_vel_x
     next_y = current_y - new_vel_y
     return [next_y, next_y]
 
+def _next_position(position, velocity):
+    [pos_x, pos_y] = position
+    [vel_x, vel_y] = velocity
+    return [pos_x + vel_x, pos_y + vel_y]
+
+def _next_velocity(position, velocity):
+    [gra_x, gra_y] = _calculate_gravity(position)
+    [vel_x, vel_y] = velocity
+    return [vel_x + gra_x, vel_y + gra_y]
+
+def _predicted_trajectory(position, velocity, n = 20):
+    if n == 0:
+        return []
+    next_pos = _next_position(position, velocity)
+    next_vel = _next_velocity(position, velocity)
+    return [next_pos] + _predicted_trajectory(next_pos, next_vel, n - 1)
+
+if False:
+    print(_predicted_trajectory([53, 48], [8, 0]))
+    print(_predicted_trajectory([17, 48], [0, 0]))
+
+def _acceleration_perpendicular_to_gravity(gravity):
+    if gravity == [0, -1]:
+        return [1, 0]
+    if gravity == [-1, 0]:
+        return [0, -1]
+    if gravity == [0, 1]:
+        return [-1, 0]
+    if gravity == [1, 0]:
+        return [0, 1]
+    return [0, 0]
+
+if False:
+    assert _acceleration_perpendicular_to_gravity([0, -1]) == [1, 0]
+    assert _acceleration_perpendicular_to_gravity([-1, 0]) == [0, -1]
+    assert _acceleration_perpendicular_to_gravity([0, 1]) == [-1, 0]
+    assert _acceleration_perpendicular_to_gravity([1, 0]) == [0, 1]
+
+PLANET_SIDE_LENGTH = 36
+
+def _point_in_planet(point):
+    [x, y] = point
+    return abs(x) <= PLANET_SIDE_LENGTH // 2 and abs(y) <= PLANET_SIDE_LENGTH // 2
+
+if False:
+    assert _point_in_planet([1, 1]) == True
+    assert _point_in_planet([18, 18]) == True
+    assert _point_in_planet([19, 18]) == False
+
+def _trajectory_hits_planet(trajectory):
+    return any([_point_in_planet(point) for point in trajectory])
+
+if False:
+    assert _trajectory_hits_planet([[19, 18], [18, 18]]) == True
+    assert _trajectory_hits_planet([[19, 18], [20, 18]]) == False
+
+def _acceleration_heuristic(position, velocity):
+    trajectory = _predicted_position(position, velocity)
+    if _trajectory_hits_planet(trajectory):
+        current_gravity = _calculate_gravity(position)
+        return _acceleration_perpendicular_to_gravity(current_gravity)
+    return None
 
 def _extract_ship_infos(game_resp) -> {int, dict}:
     '''Dict with ship_id as key, "ship_and_command" as value.'''
@@ -561,9 +623,6 @@ if False:
     print(_make_acc_vector(42, 8))
 
     print(_make_acc_vector(-42, 0))
-
-
-PLANET_SIDE_LENGTH = 36
 
 
 # fuel       min = 1    max = 446
@@ -626,7 +685,9 @@ def main():
               'our_ship_id': our_ship_id,
               'enemy_ship_id': enemy_ship_id})
 
+    our_ship = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
     our_position = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
+    our_velocity = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['velocity']
     their_ship = _extract_ship_infos(start_game_resp)[enemy_ship_id]
     for round_i in range(MAX_N_ROUNDS):
 
@@ -636,14 +697,18 @@ def main():
                                             shooting_coords[1]),
                                        1)
 
-        if math.hypot(*our_position) < 2 * PLANET_SIDE_LENGTH:
-            cmds = [_accelerate_command_dsl(our_ship_id,
-                                            _make_acc_vector(-our_position[0],
-                                                             -our_position[1])),
-                    shoot_cmd]
-        else:
-            cmds = []
+        acceleration = _acceleration_heuristic(our_position, our_velocity)
+        cmds = []
+        if acceleration is not None:
+            cmds.push(_accelerate_command_dsl(our_ship_id, acceleration))
 
+        # if math.hypot(*our_position) < 2 * PLANET_SIDE_LENGTH:
+        #     cmds = [_accelerate_command_dsl(our_ship_id,
+        #                                     _make_acc_vector(-our_position[0],
+        #                                                      -our_position[1])),
+        #             shoot_cmd]
+        # else:
+        #     cmds = []
 
         _log_info('sending commands',
                   {'cmds': cmds,
@@ -654,7 +719,9 @@ def main():
                   {'cmd_resp': cmd_resp})
 
 
+        # NOTE(jdudek): can we just keep our_ship and update after a command?
         our_position = _extract_ship_infos(cmd_resp)[our_ship_id]['ship']['position']
+        our_velocity = _extract_ship_infos(cmd_resp)[our_ship_id]['ship']['velocity']
         their_ship = _extract_ship_infos(cmd_resp)[enemy_ship_id]
 
     # TODO: use game_response and send commands
