@@ -741,6 +741,7 @@ def main():
               'enemy_ship_id': enemy_ship_id})
 
     rng = _make_rng()
+    shots_done_count = 0
 
     for round_i in range(MAX_N_ROUNDS):
 
@@ -772,12 +773,13 @@ def main():
                 cmds.append(_accelerate_command_dsl(ship['ship_id'], _make_acc_vector(*ship['velocity'])))
 
 
-            # shooting_coords = _predicted_position(enemy_ship_and_commands)
             shooting_coords = _predicted_trajectory(enemy_ship['position'], enemy_ship['velocity'], n=1)[0]
+            # we don't know what should be the last arg
+            # so we pass here a different int each time to see what happens
             shoot_cmd = _shoot_command_dsl(ship['ship_id'],
                                            Cons(shooting_coords[0],
                                                 shooting_coords[1]),
-                                           1)
+                                           shots_done_count)
 
             # If we have ammo, shoot at the enemy
             # Let’s shoot every few turns
@@ -785,6 +787,7 @@ def main():
             # TODO check temperature (x5?)
             if game_state['game_tick'] % 5 == 0:
                 cmds.append(shoot_cmd)
+                shots_done_count += 1
 
             # TODO: If the circumstances are right, fork the ship.
             #
