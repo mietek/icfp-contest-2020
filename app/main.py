@@ -562,18 +562,12 @@ if False:
     print(_predicted_trajectory([53, 48], [8, 0]))
     print(_predicted_trajectory([17, 48], [0, 0]))
 
-def _acceleration_perpendicular_to_gravity(gravity):
-    if gravity == [0, 1]: return [1, 0]
-    if gravity == [-1, 0]: return [0, 1]
-    if gravity == [0, -1]: return [-1, 0]
-    if gravity == [1, 0]: return [0, -1]
+def _acceleration_away_from_gravity(gravity):
+    if gravity == [0, 1]:  return [1, 1]
+    if gravity == [-1, 0]: return [-1, 1]
+    if gravity == [0, -1]: return [-1, -1]
+    if gravity == [1, 0]:  return [1, -1]
     return [0, 0]
-
-if False:
-    assert _acceleration_perpendicular_to_gravity([0, -1]) == [-1, 0]
-    assert _acceleration_perpendicular_to_gravity([-1, 0]) == [0, 1]
-    assert _acceleration_perpendicular_to_gravity([0, 1]) == [1, 0]
-    assert _acceleration_perpendicular_to_gravity([1, 0]) == [0, -1]
 
 PLANET_SIDE_LENGTH = 36
 
@@ -597,7 +591,7 @@ def _acceleration_heuristic(position, velocity):
     trajectory = _predicted_trajectory(position, velocity)
     if _trajectory_hits_planet(trajectory):
         current_gravity = _calculate_gravity(position)
-        return _acceleration_perpendicular_to_gravity(current_gravity)
+        return _acceleration_away_from_gravity(current_gravity)
     return None
 
 if False:
