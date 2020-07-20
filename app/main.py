@@ -8,6 +8,8 @@ import functools as fnt
 import pprint
 import _thread
 
+import numpy as np
+import numpy.random
 import requests
 
 def _subsequent_ones(bits):
@@ -674,6 +676,10 @@ def _remaining_fuel(ship):
     return ship['x4'][0]
 
 
+def _make_rng():
+    return np.random.default_rng(42)
+
+
 def main():
     server_url = sys.argv[1]
     player_key = sys.argv[2]
@@ -733,6 +739,8 @@ def main():
               'our_ship_id': our_ship_id,
               'enemy_ship_id': enemy_ship_id})
 
+    rng = _make_rng()
+
     for round_i in range(MAX_N_ROUNDS):
 
         cmds = []
@@ -779,7 +787,9 @@ def main():
             # The ship probably can only fork N-1 times, where N is the number of available bombs.
 
             # Fork if we have >1 bombs and a stable orbit so the forks don't crash.
-            if ship['x4'][3] > 1 and _ship_has_stable_orbit(ship):
+            # Added randomness for wider forks cloud.
+            fork_draw = rng.random()
+            if ship['x4'][3] > 1 and _ship_has_stable_orbit(ship) and fork_draw > 0.5:
                 fork_cmd = _fork_command_dsl(our_ship_id,
                                              _remaining_fuel(ship) // 2,
                                              0,
