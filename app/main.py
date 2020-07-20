@@ -549,6 +549,7 @@ def _predicted_trajectory(position, velocity, n = 20):
     return [next_pos] + _predicted_trajectory(next_pos, next_vel, n - 1)
 
 if False:
+    # See https://icfpcontest2020.github.io/#/visualize?game=a1432d8b-ca4e-48f1-8900-6cb4dbbe9bfb
     print(_predicted_trajectory([53, 48], [8, 0]))
     print(_predicted_trajectory([17, 48], [0, 0]))
 
@@ -688,7 +689,6 @@ def main():
               'our_ship_id': our_ship_id,
               'enemy_ship_id': enemy_ship_id})
 
-    our_ship = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
     our_position = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
     our_velocity = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['velocity']
     their_ship = _extract_ship_infos(start_game_resp)[enemy_ship_id]
@@ -703,7 +703,7 @@ def main():
         acceleration = _acceleration_heuristic(our_position, our_velocity)
         cmds = []
         if acceleration is not None:
-            cmds.append(_accelerate_command_dsl(our_ship_id, acceleration))
+            cmds.append(_accelerate_command_dsl(our_ship_id, _make_acc_vector(acceleration)))
 
         # if math.hypot(*our_position) < 2 * PLANET_SIDE_LENGTH:
         #     cmds = [_accelerate_command_dsl(our_ship_id,
