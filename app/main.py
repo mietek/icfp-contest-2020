@@ -606,7 +606,7 @@ def _extract_ship_infos(game_resp) -> {int, dict}:
             for sh_cmd in game_resp['game_state']['ships_and_commands']}
 
 
-MAX_N_ROUNDS = 256
+MAX_N_ROUNDS = 384
 
 
 def _clamp(num, clipping_abs_val):
