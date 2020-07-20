@@ -795,7 +795,7 @@ def main():
                     new_enemy = new_enemies['ship']
                     if new_enemy['role'] != our_role:
                         new_enemy_position = new_enemy['position']
-                        new_enemy_distance = distance(our_position, new_enemy_position)
+                        new_enemy_distance = _pos_distance(our_position, new_enemy_position)
                         if new_enemy_distance < closest_enemy_distance:
                             closest_enemy_distance = new_enemy_distance
                 # Is the closest enemy close enough to die when we detonate?
