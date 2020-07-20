@@ -670,6 +670,10 @@ def _ship_has_stable_orbit(ship):
     return math.hypot(*ship['velocity']) > 8
 
 
+def _remaining_fuel(ship):
+    return ship['x4'][0]
+
+
 def main():
     server_url = sys.argv[1]
     player_key = sys.argv[2]
@@ -776,7 +780,11 @@ def main():
 
             # Fork if we have bombs and a stable orbit so the forks don't crash.
             if ship['x4'][3] > 0 and _ship_has_stable_orbit(ship):
-                fork_cmd = _fork_command_dsl(our_ship_id, 1, 0, 0, 1)
+                fork_cmd = _fork_command_dsl(our_ship_id,
+                                             _remaining_fuel(ship) // 2,
+                                             0,
+                                             0,
+                                             1)
                 cmds.append(fork_cmd)
 
         _log_info('sending commands',
