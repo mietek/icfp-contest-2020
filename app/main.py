@@ -712,6 +712,7 @@ def main():
         sys.exit()
 
     ship_role_ids = _extract_ship_ids(start_game_resp)
+    game_state = start_game_resp['game_state']
 
     # TODO: Now that we have forking, we may need to control more than 1 ship!
     #
@@ -735,42 +736,39 @@ def main():
               'enemy_ship_id': enemy_ship_id})
 
     our_position = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['position']
-    our_velocity = _extract_ship_infos(start_game_resp)[our_ship_id]['ship']['velocity']
     their_ship = _extract_ship_infos(start_game_resp)[enemy_ship_id]
     for round_i in range(MAX_N_ROUNDS):
 
-        # If we are attacking, and a defender ship is in range
-
-        shooting_coords = _predicted_position(their_ship)
-        shoot_cmd = _shoot_command_dsl(enemy_ship_id,
-                                       Cons(shooting_coords[0],
-                                            shooting_coords[1]),
-                                       1)
-
-        acceleration = _acceleration_heuristic(our_position, our_velocity)
         cmds = []
-        if acceleration is not None:
-            cmds.append(_accelerate_command_dsl(our_ship_id, _make_acc_vector(*acceleration)))
 
-        # if math.hypot(*our_position) < 2 * PLANET_SIDE_LENGTH:
-        #     cmds = [_accelerate_command_dsl(our_ship_id,
-        #                                     _make_acc_vector(-our_position[0],
-        #                                                      -our_position[1])),
-        #             shoot_cmd]
-        # else:
-        #     cmds = []
+        for ship_and_command in game_state['ships_and_commands']:
+            ship = ship_and_command['ship']
+            if ship['role'] != our_role:
+                continue
+
+            acceleration = _acceleration_heuristic(ship['position'], ship['velocity'])
+            cmds = []
+            if acceleration is not None:
+                cmds.append(_accelerate_command_dsl(our_ship_id, _make_acc_vector(*acceleration)))
 
 
-        # TODO: If the circumstances are right, fork the ship.
-        #
-        # That is, probably fork after obtaining a stable orbit.
-        #
-        # The ship probably can only fork N-1 times, where N is the number of available bombs.
+            # If we are attacking, and a defender ship is in range
 
-        # if ???:
-        #    fork_cmd = _fork_command_dsl(our_ship_id, 1, 0, 0, 1)
-        #    cmds.append(fork_cmd)
+            # shooting_coords = _predicted_position(their_ship)
+            # shoot_cmd = _shoot_command_dsl(enemy_ship_id,
+            #                                Cons(shooting_coords[0],
+            #                                     shooting_coords[1]),
+            #                                1)
 
+            # TODO: If the circumstances are right, fork the ship.
+            #
+            # That is, probably fork after obtaining a stable orbit.
+            #
+            # The ship probably can only fork N-1 times, where N is the number of available bombs.
+
+            # if ???:
+            #    fork_cmd = _fork_command_dsl(our_ship_id, 1, 0, 0, 1)
+            #    cmds.append(fork_cmd)
 
         _log_info('sending commands',
                   {'cmds': cmds,
@@ -780,11 +778,9 @@ def main():
         _log_info('commands sent',
                   {'cmd_resp': cmd_resp})
 
-
-        # NOTE(jdudek): can we just keep our_ship and update after a command?
         our_position = _extract_ship_infos(cmd_resp)[our_ship_id]['ship']['position']
-        our_velocity = _extract_ship_infos(cmd_resp)[our_ship_id]['ship']['velocity']
         their_ship = _extract_ship_infos(cmd_resp)[enemy_ship_id]
+        game_state = cmd_resp['game_state']
 
     # TODO: use game_response and send commands
     _log_info("There's nothing more here, exciting.")
