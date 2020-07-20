@@ -6,6 +6,7 @@ import collections as c
 import sys
 import functools as fnt
 import pprint
+import _thread
 
 import requests
 
@@ -548,6 +549,20 @@ if False:
 
 
 PLANET_SIDE_LENGTH = 36
+
+
+# fuel       min = 1    max = 446
+# ammo       min = 0    max = 111    1 ammo    =  4 fuel    start params to maximize ammo    = 2,111,0,1
+# coolant    min = 0    max =  37    1 coolant = 12 fuel    start params to maximize coolant = 2,0,37,1
+# bombs      min = 1    max = 223    1 bomb    =  2 fuel    start params to maximize bombs   = 2,0,0,223
+
+def _test_start_params(fuel, ammo, coolant, bombs):
+    '''For manual use only'''
+    create_resp = send_create()
+    _thread.start_new_thread(send_join, (create_resp[0],))
+    send_join(create_resp[1])
+    start_resp = send_start(create_resp[1], fuel, ammo, coolant, bombs)
+    print(start_resp)
 
 
 def main():
