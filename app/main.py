@@ -749,7 +749,8 @@ def main():
             if acceleration is not None and ship['x4'][0] > 0:
                 cmds.append(_accelerate_command_dsl(ship['ship_id'], _make_acc_vector(*acceleration)))
 
-            shooting_coords = _predicted_position(enemy_ship_and_commands)
+            # shooting_coords = _predicted_position(enemy_ship_and_commands)
+            shooting_coords = _next_position(enemy_ship['position'], enemy_ship['velocity'])
             shoot_cmd = _shoot_command_dsl(ship['ship_id'],
                                            Cons(shooting_coords[0],
                                                 shooting_coords[1]),
