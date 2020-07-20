@@ -564,23 +564,16 @@ if False:
     print(_predicted_trajectory([17, 48], [0, 0]))
 
 def _acceleration_perpendicular_to_gravity(gravity):
-    # Negative acceleration does not behave as expected, see
-    # https://icfpcontest2020.github.io/#/visualize?game=79d6918d-5ab9-4cdf-9422-d3474ef8b995
-    # https://icfpcontest2020.github.io/#/visualize?game=eaea7da5-b5be-4ffd-8bdb-be4709768fca
-    if gravity == [0, 1]:
-        return [1, 0]
-    if gravity == [-1, 0]:
-        return [0, -1]
-    if gravity == [0, -1]:
-        return [-1, 0]
-    if gravity == [1, 0]:
-        return [0, 1]
+    if gravity == [0, 1]: return [1, 0]
+    if gravity == [-1, 0]: return [0, 1]
+    if gravity == [0, -1]: return [-1, 0]
+    if gravity == [1, 0]: return [0, -1]
     return [0, 0]
 
 if False:
-    assert _acceleration_perpendicular_to_gravity([0, -1]) == [1, 0]
+    assert _acceleration_perpendicular_to_gravity([0, -1]) == [-1, 0]
     assert _acceleration_perpendicular_to_gravity([-1, 0]) == [0, 1]
-    assert _acceleration_perpendicular_to_gravity([0, 1]) == [-1, 0]
+    assert _acceleration_perpendicular_to_gravity([0, 1]) == [1, 0]
     assert _acceleration_perpendicular_to_gravity([1, 0]) == [0, -1]
 
 PLANET_SIDE_LENGTH = 36
