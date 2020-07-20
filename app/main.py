@@ -534,7 +534,6 @@ def _predicted_position(ship_and_commands):
     [vel_x, vel_y] = ship['velocity']
     [g_x, g_y] = _calculate_gravity(ship['position'])
     # parsing commands to extract the current thrust left for later
-    # NOTE(jdudek): does past acceleration matter at all?
     new_vel_x = vel_x + g_x
     new_vel_y = vel_y + g_y
     next_x = current_x - new_vel_x
@@ -736,12 +735,14 @@ def main():
         cmds = []
 
         enemy_ship = None
+        enemy_ship_and_commands = None
         for ship_and_command in game_state['ships_and_commands']:
             ship = ship_and_command['ship']
             # For now ignore that there can be multiple enemy ships, and just
             # target the last one in the list
             if ship['role'] != our_role:
                 enemy_ship = ship
+                enemy_ship_and_commands = ship_and_command
 
         for ship_and_command in game_state['ships_and_commands']:
             ship = ship_and_command['ship']
@@ -754,7 +755,7 @@ def main():
             if acceleration is not None and ship['x4'][0] > 0:
                 cmds.append(_accelerate_command_dsl(ship['ship_id'], _make_acc_vector(*acceleration)))
 
-            shooting_coords = _next_position(enemy_ship['position'], enemy_ship['velocity'])
+            shooting_coords = _predicted_position(enemy_ship_and_commands)
             shoot_cmd = _shoot_command_dsl(ship['ship_id'],
                                            Cons(shooting_coords[0],
                                                 shooting_coords[1]),
