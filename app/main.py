@@ -570,11 +570,9 @@ def _acceleration_perpendicular_to_gravity(gravity):
     if gravity == [0, 1]:
         return [1, 0]
     if gravity == [-1, 0]:
-        # return [0, -1]
-        return [0, 1]
+        return [0, -1]
     if gravity == [0, -1]:
-        # return [-1, 0]
-        return [1, 0]
+        return [-1, 0]
     if gravity == [1, 0]:
         return [0, 1]
     return [0, 0]
