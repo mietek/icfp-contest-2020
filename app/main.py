@@ -769,7 +769,7 @@ def main():
             acceleration = _acceleration_heuristic(ship['position'], ship['velocity'])
 
             # If the heuristic tells us to move, and we have fuel, and we won't kill ourselves by moving, then move
-            if acceleration is not None and ship['x4'][0] > 1:
+            if acceleration is not None and _remaining_fuel(ship) > 1:
                 cmds.append(_accelerate_command_dsl(ship['ship_id'], _make_acc_vector(*acceleration)))
 
             random_acc_draw = rng.random()
