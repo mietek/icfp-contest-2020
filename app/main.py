@@ -706,9 +706,9 @@ def main():
 
     _log_info('starting with arbitrary ship parameters')
     start_game_resp = send_start(player_key,
-                                 x0=384, # fuel
-                                 x1=0,   # ammo
-                                 x2=0,   # coolant
+                                 x0=272, # fuel
+                                 x1=16,  # ammo???
+                                 x2=4,   # coolant???
                                  x3=32,  # bombs
                                  sender_f=sender_f)
     _log_info('started',
@@ -759,6 +759,8 @@ def main():
                 enemy_ship = ship
                 enemy_ship_and_commands = ship_and_command
 
+        # We can only shoot once per round, regardless of how many ships there are?
+        already_shot_this_round = False
         for ship_and_command in game_state['ships_and_commands']:
             ship = ship_and_command['ship']
             if ship['role'] != our_role:
@@ -783,13 +785,14 @@ def main():
                                                 shooting_coords[1]),
                                            shots_done_count)
 
-            # If we have ammo, shoot at the enemy
-            # Let’s shoot every few turns
             # TODO check if the enemy is in range
             # TODO check temperature (x5?)
-            if game_state['game_tick'] % 5 == 0:
+            # Let’s give each ship a 50% chance to shoot per round
+            shoot_draw = rng.random()
+            if shoot_draw > 0.5 and not already_shot_this_round:
                 cmds.append(shoot_cmd)
                 shots_done_count += 1
+                already_shot_this_round = True
 
             # TODO: If the circumstances are right, fork the ship.
             #
