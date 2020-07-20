@@ -735,10 +735,17 @@ def main():
               'our_ship_id': our_ship_id,
               'enemy_ship_id': enemy_ship_id})
 
-    their_ship = _extract_ship_infos(start_game_resp)[enemy_ship_id]
     for round_i in range(MAX_N_ROUNDS):
 
         cmds = []
+
+        enemy_ship = None
+        for ship_and_command in game_state['ships_and_commands']:
+            ship = ship_and_command['ship']
+            # For now ignore that there can be multiple enemy ships, and just
+            # target the last one in the list
+            if ship['role'] != our_role:
+                enemy_ship = ship
 
         for ship_and_command in game_state['ships_and_commands']:
             ship = ship_and_command['ship']
@@ -747,16 +754,21 @@ def main():
 
             acceleration = _acceleration_heuristic(ship['position'], ship['velocity'])
 
-            if acceleration is not None:
+            # If the heuristic tells us to move, and we have fuel, then move
+            if acceleration is not None and ship['x4'][0] > 0:
                 cmds.append(_accelerate_command_dsl(ship['ship_id'], _make_acc_vector(*acceleration)))
 
-            # If we are attacking, and a defender ship is in range
+            shooting_coords = _next_position(enemy_ship['position'], enemy_ship['velocity'])
+            shoot_cmd = _shoot_command_dsl(ship['ship_id'],
+                                           Cons(shooting_coords[0],
+                                                shooting_coords[1]),
+                                           1)
 
-            # shooting_coords = _predicted_position(their_ship)
-            # shoot_cmd = _shoot_command_dsl(enemy_ship_id,
-            #                                Cons(shooting_coords[0],
-            #                                     shooting_coords[1]),
-            #                                1)
+            # If we have ammo shoot at the enemy
+            # TODO check if the enemy is in range
+            # TODO check temperature (x5?)
+            if ship['x4'][1] > 0:
+                cmds.append(shoot_cmd)
 
             # TODO: If the circumstances are right, fork the ship.
             #
@@ -764,9 +776,10 @@ def main():
             #
             # The ship probably can only fork N-1 times, where N is the number of available bombs.
 
-            # if ???:
-            #    fork_cmd = _fork_command_dsl(our_ship_id, 1, 0, 0, 1)
-            #    cmds.append(fork_cmd)
+            # For now we fork whenever we have bombs
+            if ship['x4'][3] > 0 and game_state['game_tick'] > 3:
+               fork_cmd = _fork_command_dsl(our_ship_id, 1, 0, 0, 1)
+               cmds.append(fork_cmd)
 
         _log_info('sending commands',
                   {'cmds': cmds})
@@ -775,7 +788,6 @@ def main():
         _log_info('commands sent',
                   {'cmd_resp': cmd_resp})
 
-        their_ship = _extract_ship_infos(cmd_resp)[enemy_ship_id]
         game_state = cmd_resp['game_state']
 
     # TODO: use game_response and send commands
